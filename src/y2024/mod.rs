@@ -9,6 +9,7 @@ mod day3;
 mod day4;
 mod day5;
 mod day6;
+mod day7;
 
 pub struct Year2024;
 
@@ -20,7 +21,7 @@ impl AocYear for Year2024 {
     type Day4 = SolvedDay<day4::PuzzleSolution>;
     type Day5 = SolvedDay<day5::PuzzleSolution>;
     type Day6 = SolvedDay<day6::PuzzleSolution>;
-    type Day7 = UnsolvedDay;
+    type Day7 = SolvedDay<day7::PuzzleSolution>;
     type Day8 = UnsolvedDay;
     type Day9 = UnsolvedDay;
     type Day10 = UnsolvedDay;
