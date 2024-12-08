@@ -5,9 +5,11 @@ use crate::core::io;
 mod date;
 mod err;
 pub mod matrix;
+mod duration;
 
 pub use date::get_aoc_season;
 pub use err::StringError;
+pub use duration::DisplayDuration;
 
 pub struct Break;
 

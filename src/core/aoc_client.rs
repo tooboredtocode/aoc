@@ -15,6 +15,12 @@ pub enum AocClientError<I: Input> {
     InputError(Box<I::ParseError>),
 }
 
+#[derive(Debug)]
+pub enum AocClientErrorRaw {
+    Request(reqwest::Error),
+    Io(io::Error),
+}
+
 const USER_AGENT: &str = concat!("aoc-client/", env!("CARGO_PKG_VERSION"));
 
 impl AocClient {
@@ -43,14 +49,19 @@ impl AocClient {
     }
 
     pub async fn get_challenge<I: Input>(&self, year: u32, day: u32) -> Result<I, AocClientError<I>> {
-        let text = match self.get_challenge_from_fs(year, day)? {
-            Some(text) => text,
-            None => self.get_challenge_from_server(year, day).await?
-        };
+        let text = self.get_challenge_raw(year, day).await?;
 
-        match I::from_input(text).await {
+        match I::from_input(text) {
             Ok(input) => Ok(input),
             Err(err) => Err(AocClientError::from_input_error(err)),
+        }
+    }
+
+    pub async fn get_challenge_raw(&self, year: u32, day: u32) -> Result<String, AocClientErrorRaw> {
+        match self.get_challenge_from_fs(year, day)? {
+            Some(text) => Ok(text),
+            None => self.get_challenge_from_server(year, day).await
+                .map_err(Into::into)
         }
     }
 
@@ -110,9 +121,21 @@ impl<I: Input> AocClientError<I> {
     }
 }
 
+impl From<reqwest::Error> for AocClientErrorRaw {
+    fn from(err: reqwest::Error) -> Self {
+        AocClientErrorRaw::Request(err)
+    }
+}
+
 impl<I: Input> From<reqwest::Error> for AocClientError<I> {
     fn from(err: reqwest::Error) -> Self {
         AocClientError::Request(err)
+    }
+}
+
+impl From<io::Error> for AocClientErrorRaw {
+    fn from(err: io::Error) -> Self {
+        AocClientErrorRaw::Io(err)
     }
 }
 
@@ -122,22 +145,26 @@ impl<I: Input> From<io::Error> for AocClientError<I> {
     }
 }
 
+impl<I: Input> From<AocClientErrorRaw> for AocClientError<I> {
+    fn from(err: AocClientErrorRaw) -> Self {
+        match err {
+            AocClientErrorRaw::Request(err) => AocClientError::Request(err),
+            AocClientErrorRaw::Io(err) => AocClientError::Io(err),
+        }
+    }
+}
+
 impl<I: Input> fmt::Debug for AocClientError<I> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut tup = f.debug_tuple("AocClientError");
+
         match self {
-            AocClientError::Request(err) => {
-                write!(f, "Request error: ")?;
-                fmt::Debug::fmt(err, f)
-            }
-            AocClientError::Io(err) => {
-                write!(f, "IO error: ")?;
-                fmt::Debug::fmt(err, f)
-            }
-            AocClientError::InputError(err) => {
-                write!(f, "Input error: ")?;
-                fmt::Debug::fmt(err, f)
-            }
-        }
+            AocClientError::Request(err) => tup.field(err),
+            AocClientError::Io(err) => tup.field(err),
+            AocClientError::InputError(err) => tup.field(err),
+        };
+
+        tup.finish()
     }
 }
 
@@ -160,12 +187,36 @@ impl<I: Input> fmt::Display for AocClientError<I> {
     }
 }
 
+impl fmt::Display for AocClientErrorRaw {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            AocClientErrorRaw::Request(err) => {
+                write!(f, "Request error: ")?;
+                fmt::Display::fmt(err, f)
+            }
+            AocClientErrorRaw::Io(err) => {
+                write!(f, "IO error: ")?;
+                fmt::Display::fmt(err, f)
+            }
+        }
+    }
+}
+
 impl<I: Input> std::error::Error for AocClientError<I> {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             AocClientError::Request(err) => Some(err),
             AocClientError::Io(err) => Some(err),
             AocClientError::InputError(err) => Some(err.as_ref()),
+        }
+    }
+}
+
+impl std::error::Error for AocClientErrorRaw {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            AocClientErrorRaw::Request(err) => Some(err),
+            AocClientErrorRaw::Io(err) => Some(err),
         }
     }
 }

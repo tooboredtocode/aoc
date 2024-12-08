@@ -1,5 +1,4 @@
 use crate::core::{Input, Puzzle, PuzzlePart2};
-use crate::core::aoc_client::AocClientError;
 use crate::util::StringError;
 
 /// https://adventofcode.com/2024/day/5
@@ -18,14 +17,13 @@ pub struct Update {
 
 impl Puzzle for PuzzleSolution {
     type Input = PuzzleInput;
-    type FetchError = AocClientError<PuzzleInput>;
     type SolveError = StringError;
+    type ResultPart1 = String;
 
-    async fn fetch_input(client: &crate::core::AocClient) -> Result<Self::Input, Self::FetchError> {
-        client.get_challenge(2024, 5).await
-    }
+    const YEAR: u32 = 2024;
+    const DAY: u32 = 5;
 
-    async fn solve(input: Self::Input) -> Result<(), Self::SolveError> {
+    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
         let valid_updates = input.updates.iter().filter(|update| {
             update.pages.iter()
                 .enumerate()
@@ -48,15 +46,14 @@ impl Puzzle for PuzzleSolution {
         }).sum::<Option<u32>>()
             .ok_or_else(|| StringError::new("Failed to sum, some valid updates are empty"))?;
 
-        println!("Found {} valid updates", valid_updates.len());
-        println!("Result: {}", res);
-
-        Ok(())
+        Ok(format!("Found {} valid updates, result: {}", valid_updates.len(), res))
     }
 }
 
 impl PuzzlePart2 for PuzzleSolution {
-    async fn solve_part2(input: Self::Input) -> Result<(), Self::SolveError> {
+    type ResultPart2 = String;
+
+    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
         let mut invalid_updates = input.updates.iter().filter(|update| {
             update.pages.iter()
                 .enumerate()
@@ -75,8 +72,6 @@ impl PuzzlePart2 for PuzzleSolution {
         })
             .cloned()
             .collect::<Vec<_>>();
-
-        println!("Found {} invalid updates", invalid_updates.len());
 
         for update in invalid_updates.iter_mut() {
             // Try to reorder the pages in the update so that it becomes valid
@@ -104,16 +99,14 @@ impl PuzzlePart2 for PuzzleSolution {
         }).sum::<Option<u32>>()
             .ok_or_else(|| StringError::new("Failed to sum, some invalid updates are empty"))?;
 
-        println!("Result of reordered invalid updates: {}", res);
-
-        Ok(())
+        Ok(format!("Found {} invalid updates\nResult of reordered invalid updates: {}", invalid_updates.len(), res))
     }
 }
 
 impl Input for PuzzleInput {
     type ParseError = StringError;
 
-    async fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: String) -> Result<Self, Self::ParseError> {
         let (rules_text, updates_text) = input.split_once("\n\n")
             .ok_or_else(|| StringError::new("Failed to split text"))?;
 

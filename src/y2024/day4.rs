@@ -1,5 +1,4 @@
 use crate::core::{Input, Puzzle, PuzzlePart2};
-use crate::core::aoc_client::AocClientError;
 use crate::util::matrix::{Direction, Matrix};
 use crate::util::StringError;
 
@@ -12,15 +11,14 @@ pub struct PuzzleInput {
 
 impl Puzzle for PuzzleSolution {
     type Input = PuzzleInput;
-    type FetchError = AocClientError<PuzzleInput>;
     type SolveError = StringError;
+    type ResultPart1 = String;
 
-    async fn fetch_input(client: &crate::core::AocClient) -> Result<Self::Input, Self::FetchError> {
-        client.get_challenge(2024, 4).await
-    }
+    const YEAR: u32 = 2024;
+    const DAY: u32 = 4;
 
     /// Find all xmases in the word search
-    async fn solve(input: Self::Input) -> Result<(), Self::SolveError> {
+    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
         let result = input.word_search
             .entry_iter()
             .filter(|item| item.get() == &'X')
@@ -38,16 +36,15 @@ impl Puzzle for PuzzleSolution {
             })
             .sum::<usize>();
 
-        println!("Found {} xmases", result);
-
-        Ok(())
+        Ok(format!("Found {} xmases", result))
     }
 }
 
 impl PuzzlePart2 for PuzzleSolution {
+    type ResultPart2 = String;
 
     /// Find all x-mas-es (aka two mas oriented in an x) in the word search
-    async fn solve_part2(input: Self::Input) -> Result<(), Self::SolveError> {
+    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
         let result = input.word_search
             .entry_iter()
             .filter(|item| item.get() == &'A') // Find all As so we can check for the other two letters
@@ -75,16 +72,14 @@ impl PuzzlePart2 for PuzzleSolution {
             })
             .count();
 
-        println!("Found {} x-mas-es", result);
-
-        Ok(())
+        Ok(format!("Found {} x-mas-es", result))
     }
 }
 
 impl Input for PuzzleInput {
     type ParseError = StringError;
 
-    async fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: String) -> Result<Self, Self::ParseError> {
         let line_length = input.lines().next().map_or(0, |line| line.chars().count());
         if line_length == 0 {
             return Err(StringError::new("No lines in the input"));

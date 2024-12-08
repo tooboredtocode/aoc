@@ -1,5 +1,4 @@
 use crate::core::{Input, Puzzle, PuzzlePart2};
-use crate::core::aoc_client::AocClientError;
 use crate::util::StringError;
 
 /// https://adventofcode.com/2024/day/7
@@ -18,37 +17,34 @@ pub struct Equation {
 
 impl Puzzle for PuzzleSolution {
     type Input = PuzzleInput;
-    type FetchError = AocClientError<PuzzleInput>;
     type SolveError = StringError;
+    type ResultPart1 = String;
 
-    async fn fetch_input(client: &crate::core::AocClient) -> Result<Self::Input, Self::FetchError> {
-        client.get_challenge(2024, 7).await
-    }
+    const YEAR: u32 = 2024;
+    const DAY: u32 = 7;
 
-    async fn solve(input: Self::Input) -> Result<(), Self::SolveError> {
+    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
         let mut valid = 0u64;
         let result = Equation::valid_equations(&input.equations, false)
             .map(|equation| equation.result)
             .inspect(|_| valid += 1)
             .sum::<u64>();
 
-        println!("Found {} valid equations which total to {}", valid, result);
-
-        Ok(())
+        Ok(format!("Found {} valid equations which total to {}", valid, result))
     }
 }
 
 impl PuzzlePart2 for PuzzleSolution {
-    async fn solve_part2(input: Self::Input) -> Result<(), Self::SolveError> {
+    type ResultPart2 = String;
+
+    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
         let mut valid = 0u64;
         let result = Equation::valid_equations(&input.equations, true)
             .map(|equation| equation.result)
             .inspect(|_| valid += 1)
             .sum::<u64>();
 
-        println!("Found {} extended valid equations which total to {}", valid, result);
-
-        Ok(())
+        Ok(format!("Found {} extended valid equations which total to {}", valid, result))
     }
 }
 
@@ -116,7 +112,7 @@ impl Equation {
 impl Input for PuzzleInput {
     type ParseError = StringError;
 
-    async fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: String) -> Result<Self, Self::ParseError> {
         input.lines()
             .map(|line| {
                 let (result, operands) = line.split_once(":")

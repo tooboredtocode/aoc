@@ -10,7 +10,7 @@ pub enum Years {
 }
 
 impl Years {
-    pub fn get_year() -> Result<Self, InquireError> {
+    pub fn get_year(benchmark: bool) -> Result<Self, InquireError> {
         let default = {
             let d = util::get_aoc_season();
             match d {
@@ -20,7 +20,12 @@ impl Years {
         };
 
         if let Some(year) = default {
-            let msg = format!("Run tasks for year {}?", year.year());
+            let msg = if benchmark {
+                format!("Benchmark tasks for year {}?", year.year())
+            } else {
+                format!("Run tasks for year {}?", year.year())
+            };
+
             let ans = Confirm::new(&msg)
                 .with_default(true)
                 .prompt()?;
@@ -30,7 +35,13 @@ impl Years {
             }
         }
 
-        Select::new("Select year to run tasks for", Self::available_years())
+        let msg = if benchmark {
+            "Select year to benchmark tasks for"
+        } else {
+            "Select year to run tasks for"
+        };
+
+        Select::new(msg, Self::available_years())
             .prompt()
     }
 
@@ -43,6 +54,12 @@ impl Years {
     pub async fn run_day(&self, day: u8, client: &crate::core::AocClient) {
         match self {
             Self::Year2024 => Year2024::run_day(day, client).await,
+        }
+    }
+
+    pub async fn benchmark_day(&self, day: u8, client: &crate::core::AocClient) {
+        match self {
+            Self::Year2024 => Year2024::benchmark_day(day, client).await,
         }
     }
 

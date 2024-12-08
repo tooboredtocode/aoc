@@ -20,6 +20,7 @@ seq!(N in 1..=25 {
 pub trait AocYearExt: AocYear + sealed::Sealed {
     fn available_days() -> Vec<u8>;
     async fn run_day(day: u8, client: &AocClient);
+    async fn benchmark_day(day: u8, client: &AocClient);
 }
 
 seq!(N in 1..=25 {
@@ -39,6 +40,15 @@ seq!(N in 1..=25 {
             match day {
                 #(
                     N => Self::Day~N::run_day(day, client).await,
+                )*
+                _ => io::print_error(format_args!("Day {} is not part of Advent of Code", day)),
+            }
+        }
+
+        async fn benchmark_day(day: u8, client: &AocClient) {
+            match day {
+                #(
+                    N => Self::Day~N::benchmark_day(day, client).await,
                 )*
                 _ => io::print_error(format_args!("Day {} is not part of Advent of Code", day)),
             }

@@ -1,4 +1,3 @@
-use crate::core::aoc_client::AocClientError;
 use crate::core::{Input, Puzzle, PuzzlePart2};
 use crate::util::StringError;
 use lazy_regex::{lazy_regex, Lazy};
@@ -24,16 +23,20 @@ enum Instruction {
     Dont,
 }
 
+pub struct PuzzleResult {
+    result: u32,
+    extended: bool,
+}
+
 impl Puzzle for PuzzleSolution {
     type Input = PuzzleInput;
-    type FetchError = AocClientError<PuzzleInput>;
     type SolveError = StringError;
+    type ResultPart1 = PuzzleResult;
 
-    async fn fetch_input(client: &crate::core::AocClient) -> Result<Self::Input, Self::FetchError> {
-        client.get_challenge(2024, 3).await
-    }
+    const YEAR: u32 = 2024;
+    const DAY: u32 = 3;
 
-    async fn solve(input: Self::Input) -> Result<(), Self::SolveError> {
+    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
         let result = Instruction::parse_jumbled(&input.jumbled_instructions)?
             .into_iter()
             .filter_map(|instruction| match instruction { // Filter out non-mul instructions
@@ -43,14 +46,17 @@ impl Puzzle for PuzzleSolution {
             .map(|(a, b)| a * b)
             .sum::<u32>();
 
-        println!("Result of the jumbled instructions: {}", result);
-
-        Ok(())
+        Ok(PuzzleResult {
+            result,
+            extended: false,
+        })
     }
 }
 
 impl PuzzlePart2 for PuzzleSolution {
-    async fn solve_part2(input: Self::Input) -> Result<(), Self::SolveError> {
+    type ResultPart2 = PuzzleResult;
+
+    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
         let result = Instruction::parse_jumbled(&input.jumbled_instructions)?
             .into_iter()
             .fold((0, true), |(acc, active), instruction| {
@@ -62,16 +68,27 @@ impl PuzzlePart2 for PuzzleSolution {
                 }
             }).0;
 
-        println!("Result of the extended jumbled instructions: {}", result);
+        Ok(PuzzleResult {
+            result,
+            extended: true,
+        })
+    }
+}
 
-        Ok(())
+impl crate::core::PuzzleResult for PuzzleResult {
+    fn display(&self) -> () {
+        if self.extended {
+            println!("Result of the extended jumbled instructions: {}", self.result)
+        } else {
+            println!("Result of the jumbled instructions: {}", self.result)
+        }
     }
 }
 
 impl Input for PuzzleInput {
     type ParseError = StringError;
 
-    async fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: String) -> Result<Self, Self::ParseError> {
         Ok(Self {
             jumbled_instructions: input,
         })

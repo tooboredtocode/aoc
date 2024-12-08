@@ -37,6 +37,8 @@ pub trait AocDay: sealed::Sealed {
     const SOLVED_PART2: bool;
 
     async fn run_day(day: u8, client: &AocClient);
+
+    async fn benchmark_day(day: u8, client: &AocClient);
 }
 
 impl AocDay for UnsolvedDay {
@@ -46,6 +48,10 @@ impl AocDay for UnsolvedDay {
     async fn run_day(day: u8, _client: &AocClient) {
         io::print_error(format_args!("Day {} has not been started yet", day));
     }
+
+    async fn benchmark_day(day: u8, _client: &AocClient) {
+        io::print_error(format_args!("Day {} has not been started yet", day));
+    }
 }
 
 impl<P: Puzzle> AocDay for SolvedDayPart1<P> {
@@ -53,7 +59,11 @@ impl<P: Puzzle> AocDay for SolvedDayPart1<P> {
     const SOLVED_PART2: bool = false;
 
     async fn run_day(_day: u8, client: &AocClient) {
-        P::run(client).await;
+        P::run_part1(client).await;
+    }
+
+    async fn benchmark_day(_day: u8, client: &AocClient) {
+        P::benchmark_part1(client, 50).await;
     }
 }
 
@@ -67,9 +77,14 @@ impl<P: PuzzlePart2> AocDay for SolvedDay<P> {
         };
 
         match part {
-            Part::Part1 => P::run(client).await,
+            Part::Part1 => P::run_part1(client).await,
             Part::Part2 => P::run_part2(client).await,
         }
+    }
+
+    async fn benchmark_day(_day: u8, client: &AocClient) {
+        P::benchmark_part1(client, 50).await;
+        P::benchmark_part2(client, 50).await;
     }
 }
 

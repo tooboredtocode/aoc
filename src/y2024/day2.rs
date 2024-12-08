@@ -1,6 +1,5 @@
 use std::ops::RangeInclusive;
-use crate::core::{AocClient, Input, Puzzle, PuzzlePart2};
-use crate::core::aoc_client::AocClientError;
+use crate::core::{Input, Puzzle, PuzzlePart2};
 use crate::util::StringError;
 
 /// https://adventofcode.com/2024/day/2
@@ -8,6 +7,10 @@ pub struct PuzzleSolution;
 
 pub struct PuzzleInput {
     reports: Vec<Report>,
+}
+
+pub struct PuzzleResult {
+    valid_reports: usize,
 }
 
 pub struct Report {
@@ -36,26 +39,25 @@ const DIFFERENCE_RANGE: RangeInclusive<u32> = 1..=3;
 
 impl Puzzle for PuzzleSolution {
     type Input = PuzzleInput;
-    type FetchError = AocClientError<PuzzleInput>;
     type SolveError = StringError;
+    type ResultPart1 = PuzzleResult;
 
-    async fn fetch_input(client: &AocClient) -> Result<Self::Input, Self::FetchError> {
-        client.get_challenge(2024, 2).await
-    }
+    const YEAR: u32 = 2024;
+    const DAY: u32 = 2;
 
-    async fn solve(input: Self::Input) -> Result<(), Self::SolveError> {
+    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
         let valid_reports = input.reports.iter()
             .filter(|report| report.is_valid())
             .count();
 
-        println!("Number of valid reports: {}", valid_reports);
-
-        Ok(())
+        Ok(PuzzleResult { valid_reports })
     }
 }
 
 impl PuzzlePart2 for PuzzleSolution {
-    async fn solve_part2(input: Self::Input) -> Result<(), Self::SolveError> {
+    type ResultPart2 = PuzzleResult;
+
+    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
         let valid_reports = input.reports.iter()
             .filter(|report| {
                 report.remove_one_iter()
@@ -63,16 +65,20 @@ impl PuzzlePart2 for PuzzleSolution {
             })
             .count();
 
-        println!("Number of valid reports: {}", valid_reports);
+        Ok(PuzzleResult { valid_reports })
+    }
+}
 
-        Ok(())
+impl crate::core::PuzzleResult for PuzzleResult {
+    fn display(&self) {
+        println!("Number of valid reports: {}", self.valid_reports);
     }
 }
 
 impl Input for PuzzleInput {
     type ParseError = StringError;
 
-    async fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: String) -> Result<Self, Self::ParseError> {
         let mut reports = Vec::new();
 
         for line in input.lines() {

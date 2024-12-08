@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use crate::core::aoc_client::AocClientError;
 use crate::core::{Input, Puzzle, PuzzlePart2};
 use crate::util::matrix::{Matrix, MatrixEntry};
 use crate::util::StringError;
@@ -17,16 +16,20 @@ pub struct Antenna {
     id: char,
 }
 
+pub struct PuzzleResult {
+    antinodes: usize,
+    extended: bool,
+}
+
 impl Puzzle for PuzzleSolution {
     type Input = PuzzleInput;
-    type FetchError = AocClientError<PuzzleInput>;
     type SolveError = StringError;
+    type ResultPart1 = PuzzleResult;
 
-    async fn fetch_input(client: &crate::core::AocClient) -> Result<Self::Input, Self::FetchError> {
-        client.get_challenge(2024, 8).await
-    }
+    const YEAR: u32 = 2024;
+    const DAY: u32 = 8;
 
-    async fn solve(input: Self::Input) -> Result<(), Self::SolveError> {
+    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
         let mut antinodes = Matrix::new(input.antennas.width(), input.antennas.height(), false);
 
         let buckets = input.bucket_antennas();
@@ -59,14 +62,14 @@ impl Puzzle for PuzzleSolution {
             .filter(|entry| *entry.get())
             .count();
 
-        println!("Found {} antinodes", antinodes);
-
-        Ok(())
+        Ok(PuzzleResult { antinodes, extended: false })
     }
 }
 
 impl PuzzlePart2 for PuzzleSolution {
-    async fn solve_part2(input: Self::Input) -> Result<(), Self::SolveError> {
+    type ResultPart2 = PuzzleResult;
+
+    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
         let mut antinodes = Matrix::new(input.antennas.width(), input.antennas.height(), false);
 
         let buckets = input.bucket_antennas();
@@ -108,9 +111,17 @@ impl PuzzlePart2 for PuzzleSolution {
             .filter(|entry| *entry.get())
             .count();
 
-        println!("Found {} extended antinodes", antinodes);
+        Ok(PuzzleResult { antinodes, extended: true })
+    }
+}
 
-        Ok(())
+impl crate::core::PuzzleResult for PuzzleResult {
+    fn display(&self) {
+        if self.extended {
+            println!("Found {} extended antinodes", self.antinodes);
+        } else {
+            println!("Found {} antinodes", self.antinodes);
+        }
     }
 }
 
@@ -137,7 +148,7 @@ impl PuzzleInput {
 impl Input for PuzzleInput {
     type ParseError = StringError;
 
-    async fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: String) -> Result<Self, Self::ParseError> {
         let line_length = input.lines().next().map_or(0, |line| line.chars().count());
         if line_length == 0 {
             return Err(StringError::new("No lines in the input"));
