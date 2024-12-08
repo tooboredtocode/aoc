@@ -1,32 +1,13 @@
-#![allow(dead_code)]
-
-use std::iter::successors;
+use std::ops::{Index, IndexMut};
+use crate::util::matrix::MatrixEntry;
 
 #[derive(Debug)]
 pub struct Matrix<T> {
-    data: Vec<T>,
-    width: usize,
-    height: usize,
+    pub(super) data: Vec<T>,
+    pub(super) width: usize,
+    pub(super) height: usize,
 }
 
-#[derive(Debug)]
-pub struct MatrixEntry<'a, T> {
-    matrix: &'a Matrix<T>,
-    x: usize,
-    y: usize,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Direction {
-    Up,
-    UpRight,
-    Right,
-    DownRight,
-    Down,
-    DownLeft,
-    Left,
-    UpLeft,
-}
 
 impl<T> Matrix<T> {
     /// Create a new matrix with the given dimensions and default value.
@@ -92,10 +73,9 @@ impl<T> Matrix<T> {
 
     /// Get a reference to the entry at the given position.
     pub fn get_entry(&self, x: usize, y: usize) -> Option<MatrixEntry<T>> {
-        if x < self.width && y < self.height {
-            Some(MatrixEntry { matrix: self, x, y })
-        } else {
-            None
+        match self.get(x, y) {
+            Some(value) => Some(MatrixEntry { matrix: self, value, x, y }),
+            None => None,
         }
     }
 
@@ -122,9 +102,11 @@ impl<T> Matrix<T> {
     /// Get an iterator over all entries in the matrix.
     pub fn entry_iter(&self) -> impl Iterator<Item=MatrixEntry<T>> {
         (0..self.height).flat_map(move |y|
-            (0..self.width).map(move |x|
-                MatrixEntry { matrix: self, x, y }
-            )
+            (0..self.width).map(move |x| {
+                // Note: the index is safe because we know the bounds are correct
+                let value = &self.data[y * self.width + x];
+                MatrixEntry { matrix: self, value, x, y }
+            })
         )
     }
 
@@ -150,64 +132,16 @@ where
     }
 }
 
-impl<'a, T> MatrixEntry<'a, T> {
-    /// Get the value at this matrix entry.
-    pub fn get(&self) -> &'a T {
-        self.matrix.get(self.x, self.y)
-            .expect("Matrix entry should be in bounds")
-    }
+impl<T> Index<(usize, usize)> for Matrix<T> {
+    type Output = T;
 
-    /// Get the position of this matrix entry.
-    pub fn position(&self) -> (usize, usize) {
-        (self.x, self.y)
-    }
-
-    pub fn adjacent(&self, direction: Direction) -> Option<Self> {
-        let x = match direction {
-            Direction::Up | Direction::Down => self.x,
-            Direction::UpRight | Direction::Right | Direction::DownRight => self.x + 1,
-            Direction::DownLeft | Direction::Left | Direction::UpLeft => self.x.overflowing_sub(1).0,
-        };
-
-        let y = match direction {
-            Direction::Left | Direction::Right => self.y,
-            Direction::UpLeft | Direction::Up | Direction::UpRight => self.y.overflowing_sub(1).0,
-            Direction::DownLeft | Direction::Down | Direction::DownRight => self.y + 1,
-        };
-
-        if x < self.matrix.width && y < self.matrix.height {
-            Some(MatrixEntry { matrix: self.matrix, x, y })
-        } else {
-            None
-        }
-    }
-
-    pub fn adjacent_iter(&self, direction: Direction) -> impl Iterator<Item=Self> + '_ {
-        let initial = Some(*self);
-        successors(initial, move |entry| entry.adjacent(direction)).skip(1)
+    fn index(&self, (x, y): (usize, usize)) -> &Self::Output {
+        self.get(x, y).expect("Index out of bounds")
     }
 }
 
-impl<T> Clone for MatrixEntry<'_, T> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-/// This is a simple reference to a matrix entry, so it's safe to copy.
-impl<T> Copy for MatrixEntry<'_, T> {}
-
-impl Direction {
-    pub fn iter() -> impl Iterator<Item=Direction> {
-        [
-            Direction::Up,
-            Direction::UpRight,
-            Direction::Right,
-            Direction::DownRight,
-            Direction::Down,
-            Direction::DownLeft,
-            Direction::Left,
-            Direction::UpLeft,
-        ].iter().copied()
+impl<T> IndexMut<(usize, usize)> for Matrix<T> {
+    fn index_mut(&mut self, (x, y): (usize, usize)) -> &mut Self::Output {
+        self.get_mut(x, y).expect("Index out of bounds")
     }
 }
