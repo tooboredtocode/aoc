@@ -1,17 +1,18 @@
 use std::ops::RangeInclusive;
-use crate::core::{Input, Puzzle, PuzzlePart2};
+use aoc_lib::{impl_puzzle_result, PuzzleInput, SolutionPart1, SolutionPart2};
 use crate::util::StringError;
 
-/// https://adventofcode.com/2024/day/2
-pub struct PuzzleSolution;
+create_solution!(2);
 
-pub struct PuzzleInput {
+pub struct Input {
     reports: Vec<Report>,
 }
 
 pub struct PuzzleResult {
     valid_reports: usize,
 }
+
+impl_puzzle_result!(PuzzleResult, "Number of valid reports {}", valid_reports);
 
 pub struct Report {
     levels: Vec<u32>,
@@ -37,15 +38,12 @@ enum Difference {
 
 const DIFFERENCE_RANGE: RangeInclusive<u32> = 1..=3;
 
-impl Puzzle for PuzzleSolution {
-    type Input = PuzzleInput;
+impl SolutionPart1 for PuzzleSolution {
+    type Input = Input;
     type SolveError = StringError;
-    type ResultPart1 = PuzzleResult;
+    type Result = PuzzleResult;
 
-    const YEAR: u32 = 2024;
-    const DAY: u32 = 2;
-
-    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let valid_reports = input.reports.iter()
             .filter(|report| report.is_valid())
             .count();
@@ -54,10 +52,12 @@ impl Puzzle for PuzzleSolution {
     }
 }
 
-impl PuzzlePart2 for PuzzleSolution {
-    type ResultPart2 = PuzzleResult;
+impl SolutionPart2 for PuzzleSolution {
+    type Input = Input;
+    type SolveError = StringError;
+    type Result = PuzzleResult;
 
-    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let valid_reports = input.reports.iter()
             .filter(|report| {
                 report.remove_one_iter()
@@ -69,16 +69,10 @@ impl PuzzlePart2 for PuzzleSolution {
     }
 }
 
-impl crate::core::PuzzleResult for PuzzleResult {
-    fn display(&self) {
-        println!("Number of valid reports: {}", self.valid_reports);
-    }
-}
-
-impl Input for PuzzleInput {
+impl PuzzleInput for Input {
     type ParseError = StringError;
 
-    fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
         let mut reports = Vec::new();
 
         for line in input.lines() {
@@ -93,7 +87,7 @@ impl Input for PuzzleInput {
             reports.push(Report { levels });
         }
 
-        Ok(PuzzleInput { reports })
+        Ok(Self { reports })
     }
 }
 

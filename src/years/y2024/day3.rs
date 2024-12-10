@@ -1,10 +1,9 @@
-use crate::core::{Input, Puzzle, PuzzlePart2};
 use crate::util::StringError;
 use lazy_regex::{lazy_regex, Lazy};
 use regex::Regex;
+use aoc_lib::{SolutionPart1, SolutionPart2};
 
-/// https://adventofcode.com/2024/day/3
-pub struct PuzzleSolution;
+create_solution!(3);
 
 pub struct PuzzleInput {
     jumbled_instructions: String,
@@ -28,15 +27,12 @@ pub struct PuzzleResult {
     extended: bool,
 }
 
-impl Puzzle for PuzzleSolution {
+impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
     type SolveError = StringError;
-    type ResultPart1 = PuzzleResult;
+    type Result = PuzzleResult;
 
-    const YEAR: u32 = 2024;
-    const DAY: u32 = 3;
-
-    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let result = Instruction::parse_jumbled(&input.jumbled_instructions)?
             .into_iter()
             .filter_map(|instruction| match instruction { // Filter out non-mul instructions
@@ -53,10 +49,12 @@ impl Puzzle for PuzzleSolution {
     }
 }
 
-impl PuzzlePart2 for PuzzleSolution {
-    type ResultPart2 = PuzzleResult;
+impl SolutionPart2 for PuzzleSolution {
+    type Input = PuzzleInput;
+    type SolveError = StringError;
+    type Result = PuzzleResult;
 
-    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let result = Instruction::parse_jumbled(&input.jumbled_instructions)?
             .into_iter()
             .fold((0, true), |(acc, active), instruction| {
@@ -75,7 +73,7 @@ impl PuzzlePart2 for PuzzleSolution {
     }
 }
 
-impl crate::core::PuzzleResult for PuzzleResult {
+impl aoc_lib::PuzzleResult for PuzzleResult {
     fn display(&self) -> () {
         if self.extended {
             println!("Result of the extended jumbled instructions: {}", self.result)
@@ -85,10 +83,16 @@ impl crate::core::PuzzleResult for PuzzleResult {
     }
 }
 
-impl Input for PuzzleInput {
+impl aoc_lib::PuzzleInput for PuzzleInput {
     type ParseError = StringError;
 
-    fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    const PREFERS_OWNED_INPUT: bool = true;
+
+    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+        Self::from_input_owned(input.to_string())
+    }
+
+    fn from_input_owned(input: String) -> Result<Self, Self::ParseError> {
         Ok(Self {
             jumbled_instructions: input,
         })

@@ -1,10 +1,9 @@
 use std::collections::HashMap;
-use crate::core::{Input, Puzzle, PuzzlePart2};
+use aoc_lib::{SolutionPart1, SolutionPart2};
 use crate::util::matrix::{Matrix, MatrixEntry};
 use crate::util::StringError;
 
-/// https://adventofcode.com/2024/day/8
-pub struct PuzzleSolution;
+create_solution!(8);
 
 #[derive(Debug)]
 pub struct PuzzleInput {
@@ -21,15 +20,12 @@ pub struct PuzzleResult {
     extended: bool,
 }
 
-impl Puzzle for PuzzleSolution {
+impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
     type SolveError = StringError;
-    type ResultPart1 = PuzzleResult;
+    type Result = PuzzleResult;
 
-    const YEAR: u32 = 2024;
-    const DAY: u32 = 8;
-
-    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let mut antinodes = Matrix::new(input.antennas.width(), input.antennas.height(), false);
 
         let buckets = input.bucket_antennas();
@@ -66,10 +62,12 @@ impl Puzzle for PuzzleSolution {
     }
 }
 
-impl PuzzlePart2 for PuzzleSolution {
-    type ResultPart2 = PuzzleResult;
+impl SolutionPart2 for PuzzleSolution {
+    type Input = PuzzleInput;
+    type SolveError = StringError;
+    type Result = PuzzleResult;
 
-    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let mut antinodes = Matrix::new(input.antennas.width(), input.antennas.height(), false);
 
         let buckets = input.bucket_antennas();
@@ -115,7 +113,7 @@ impl PuzzlePart2 for PuzzleSolution {
     }
 }
 
-impl crate::core::PuzzleResult for PuzzleResult {
+impl aoc_lib::PuzzleResult for PuzzleResult {
     fn display(&self) {
         if self.extended {
             println!("Found {} extended antinodes", self.antinodes);
@@ -145,10 +143,10 @@ impl PuzzleInput {
     }
 }
 
-impl Input for PuzzleInput {
+impl aoc_lib::PuzzleInput for PuzzleInput {
     type ParseError = StringError;
 
-    fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
         let line_length = input.lines().next().map_or(0, |line| line.chars().count());
         if line_length == 0 {
             return Err(StringError::new("No lines in the input"));

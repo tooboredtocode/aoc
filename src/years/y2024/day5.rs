@@ -1,8 +1,7 @@
-use crate::core::{Input, Puzzle, PuzzlePart2};
+use aoc_lib::{SolutionPart1, SolutionPart2};
 use crate::util::StringError;
 
-/// https://adventofcode.com/2024/day/5
-pub struct PuzzleSolution;
+create_solution!(5);
 
 #[derive(Debug)]
 pub struct PuzzleInput {
@@ -15,15 +14,12 @@ pub struct Update {
     pages: Vec<u32>,
 }
 
-impl Puzzle for PuzzleSolution {
+impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
     type SolveError = StringError;
-    type ResultPart1 = String;
+    type Result = String;
 
-    const YEAR: u32 = 2024;
-    const DAY: u32 = 5;
-
-    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let valid_updates = input.updates.iter().filter(|update| {
             update.pages.iter()
                 .enumerate()
@@ -50,10 +46,12 @@ impl Puzzle for PuzzleSolution {
     }
 }
 
-impl PuzzlePart2 for PuzzleSolution {
-    type ResultPart2 = String;
+impl SolutionPart2 for PuzzleSolution {
+    type Input = PuzzleInput;
+    type SolveError = StringError;
+    type Result = String;
 
-    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let mut invalid_updates = input.updates.iter().filter(|update| {
             update.pages.iter()
                 .enumerate()
@@ -103,10 +101,10 @@ impl PuzzlePart2 for PuzzleSolution {
     }
 }
 
-impl Input for PuzzleInput {
+impl aoc_lib::PuzzleInput for PuzzleInput {
     type ParseError = StringError;
 
-    fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
         let (rules_text, updates_text) = input.split_once("\n\n")
             .ok_or_else(|| StringError::new("Failed to split text"))?;
 

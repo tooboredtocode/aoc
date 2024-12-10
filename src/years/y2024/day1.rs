@@ -1,10 +1,9 @@
-use crate::core::{Input, Puzzle, PuzzlePart2, PuzzleResult};
+use aoc_lib::{impl_puzzle_result, PuzzleInput, SolutionPart1, SolutionPart2};
 use crate::util::StringError;
 
-/// https://adventofcode.com/2024/day/1
-pub struct PuzzleSolution;
+create_solution!(1);
 
-pub struct PuzzleInput {
+pub struct Input {
     pairs: Vec<(u32, u32)>,
 }
 
@@ -12,19 +11,20 @@ pub struct ResultPart1 {
     sum_diff: u32,
 }
 
+impl_puzzle_result!(ResultPart1, "Sum of absolute differences: {}", sum_diff);
+
 pub struct ResultPart2 {
     similarity_score: u64,
 }
 
-impl Puzzle for PuzzleSolution {
-    type Input = PuzzleInput;
+impl_puzzle_result!(ResultPart2, "Similarity score: {}", similarity_score);
+
+impl SolutionPart1 for PuzzleSolution {
+    type Input = Input;
     type SolveError = StringError;
-    type ResultPart1 = ResultPart1;
+    type Result = ResultPart1;
 
-    const YEAR: u32 = 2024;
-    const DAY: u32 = 1;
-
-    fn solve_part1(input: Self::Input) -> Result<ResultPart1, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let mut list1 = input.pairs.iter().map(|(a, _)| *a).collect::<Vec<_>>();
         let mut list2 = input.pairs.iter().map(|(_, b)| *b).collect::<Vec<_>>();
         list1.sort();
@@ -40,10 +40,12 @@ impl Puzzle for PuzzleSolution {
     }
 }
 
-impl PuzzlePart2 for PuzzleSolution {
-    type ResultPart2 = ResultPart2;
+impl SolutionPart2 for PuzzleSolution {
+    type Input = Input;
+    type SolveError = StringError;
+    type Result = ResultPart2;
 
-    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let list1 = input.pairs.iter().map(|(a, _)| *a).collect::<Vec<_>>();
         let list2 = input.pairs.iter().map(|(_, b)| *b).collect::<Vec<_>>();
 
@@ -58,22 +60,10 @@ impl PuzzlePart2 for PuzzleSolution {
     }
 }
 
-impl PuzzleResult for ResultPart1 {
-    fn display(&self) {
-        println!("Sum of absolute differences: {}", self.sum_diff);
-    }
-}
-
-impl PuzzleResult for ResultPart2 {
-    fn display(&self) {
-        println!("Similarity score: {}", self.similarity_score);
-    }
-}
-
-impl Input for PuzzleInput {
+impl PuzzleInput for Input {
     type ParseError = StringError;
 
-    fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
         let mut pairs = Vec::new();
 
         for line in input.lines() {

@@ -1,9 +1,8 @@
-use crate::core::{Input, Puzzle, PuzzlePart2};
+use aoc_lib::{SolutionPart1, SolutionPart2};
 use crate::util::matrix::{Direction as MatrixDirection, Matrix};
 use crate::util::StringError;
 
-/// https://adventofcode.com/2024/day/6
-pub struct PuzzleSolution;
+create_solution!(6);
 
 #[derive(Debug)]
 pub struct PuzzleInput {
@@ -42,15 +41,12 @@ enum GuardMoveError {
     Stuck,
 }
 
-impl Puzzle for PuzzleSolution {
+impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
     type SolveError = StringError;
-    type ResultPart1 = String;
+    type Result = String;
 
-    const YEAR: u32 = 2024;
-    const DAY: u32 = 6;
-
-    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let mut guard = input.initial_guard.clone();
         let mut visited = Matrix::new_with(input.obstacles.height(), input.obstacles.width(), |_, _| DirMap::new(false));
 
@@ -85,10 +81,12 @@ impl Puzzle for PuzzleSolution {
     }
 }
 
-impl PuzzlePart2 for PuzzleSolution {
-    type ResultPart2 = String;
+impl SolutionPart2 for PuzzleSolution {
+    type Input = PuzzleInput;
+    type SolveError = StringError;
+    type Result = String;
 
-    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let mut guard = input.initial_guard.clone();
         let mut initial_visited = Matrix::new_with(input.obstacles.height(), input.obstacles.width(), |_, _| DirMap::new(false));
 
@@ -152,10 +150,10 @@ impl PuzzlePart2 for PuzzleSolution {
     }
 }
 
-impl Input for PuzzleInput {
+impl aoc_lib::PuzzleInput for PuzzleInput {
     type ParseError = StringError;
 
-    fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
         let line_length = input.lines().next().map_or(0, |line| line.chars().count());
         if line_length == 0 {
             return Err(StringError::new("No lines in the input"));

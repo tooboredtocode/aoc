@@ -14,3 +14,14 @@ impl PuzzleResult for String {
         println!("{}", self);
     }
 }
+
+#[macro_export]
+macro_rules! impl_puzzle_result {
+    ($t:ty, $f:literal $(, $p:ident)*) => {
+        impl $crate::puzzle::PuzzleResult for $t {
+            fn display(&self) {
+                println!($f, $(self.$p),*);
+            }
+        }
+    };
+}

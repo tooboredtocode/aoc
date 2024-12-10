@@ -1,24 +1,20 @@
-use crate::core::{Input, Puzzle, PuzzlePart2};
+use aoc_lib::{SolutionPart1, SolutionPart2};
 use crate::util::matrix::{Direction, Matrix};
 use crate::util::StringError;
 
-/// https://adventofcode.com/2024/day/4
-pub struct PuzzleSolution;
+create_solution!(4);
 
 pub struct PuzzleInput {
     word_search: Matrix<char>,
 }
 
-impl Puzzle for PuzzleSolution {
+impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
     type SolveError = StringError;
-    type ResultPart1 = String;
-
-    const YEAR: u32 = 2024;
-    const DAY: u32 = 4;
+    type Result = String;
 
     /// Find all xmases in the word search
-    fn solve_part1(input: Self::Input) -> Result<Self::ResultPart1, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let result = input.word_search
             .entry_iter()
             .filter(|item| item.get() == &'X')
@@ -40,11 +36,13 @@ impl Puzzle for PuzzleSolution {
     }
 }
 
-impl PuzzlePart2 for PuzzleSolution {
-    type ResultPart2 = String;
+impl SolutionPart2 for PuzzleSolution {
+    type Input = PuzzleInput;
+    type SolveError = StringError;
+    type Result = String;
 
     /// Find all x-mas-es (aka two mas oriented in an x) in the word search
-    fn solve_part2(input: Self::Input) -> Result<Self::ResultPart2, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
         let result = input.word_search
             .entry_iter()
             .filter(|item| item.get() == &'A') // Find all As so we can check for the other two letters
@@ -76,10 +74,10 @@ impl PuzzlePart2 for PuzzleSolution {
     }
 }
 
-impl Input for PuzzleInput {
+impl aoc_lib::PuzzleInput for PuzzleInput {
     type ParseError = StringError;
 
-    fn from_input(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
         let line_length = input.lines().next().map_or(0, |line| line.chars().count());
         if line_length == 0 {
             return Err(StringError::new("No lines in the input"));

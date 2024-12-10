@@ -3,20 +3,13 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 use reqwest::Method;
-use crate::core::input::Input;
 
 pub struct AocClient {
     client: reqwest::Client,
 }
 
-pub enum AocClientError<I: Input> {
-    Request(reqwest::Error),
-    Io(io::Error),
-    InputError(Box<I::ParseError>),
-}
-
 #[derive(Debug)]
-pub enum AocClientErrorRaw {
+pub enum AocClientError {
     Request(reqwest::Error),
     Io(io::Error),
 }
@@ -48,16 +41,7 @@ impl AocClient {
         inner(session.as_ref())
     }
 
-    pub async fn get_challenge<I: Input>(&self, year: u32, day: u32) -> Result<I, AocClientError<I>> {
-        let text = self.get_challenge_raw(year, day).await?;
-
-        match I::from_input(text) {
-            Ok(input) => Ok(input),
-            Err(err) => Err(AocClientError::from_input_error(err)),
-        }
-    }
-
-    pub async fn get_challenge_raw(&self, year: u32, day: u32) -> Result<String, AocClientErrorRaw> {
+    pub async fn get_challenge(&self, year: u16, day: u8) -> Result<String, AocClientError> {
         match self.get_challenge_from_fs(year, day)? {
             Some(text) => Ok(text),
             None => self.get_challenge_from_server(year, day).await
@@ -65,12 +49,12 @@ impl AocClient {
         }
     }
 
-    fn cache_path(year: u32, day: u32) -> PathBuf {
+    fn cache_path(year: u16, day: u8) -> PathBuf {
         PathBuf::from(format!(".cache/{}/day{:0>2}-input.txt", year, day))
     }
 
     // Get the cached input from the cache file
-    fn get_challenge_from_fs(&self, year: u32, day: u32) -> Result<Option<String>, io::Error> {
+    fn get_challenge_from_fs(&self, year: u16, day: u8) -> Result<Option<String>, io::Error> {
         let path = Self::cache_path(year, day);
         let mut file = match File::open(&path) {
             Ok(file) => file,
@@ -91,13 +75,13 @@ impl AocClient {
         Ok(Some(res))
     }
 
-    fn try_save_challenge_to_fs(&self, year: u32, day: u32, text: &str) -> Result<(), io::Error> {
+    fn try_save_challenge_to_fs(&self, year: u16, day: u8, text: &str) -> Result<(), io::Error> {
         let path = Self::cache_path(year, day);
         fs::create_dir_all(path.parent().expect("Path should have parent"))?;
         fs::write(&path, text)
     }
 
-    async fn get_challenge_from_server(&self, year: u32, day: u32) -> Result<String, reqwest::Error> {
+    async fn get_challenge_from_server(&self, year: u16, day: u8) -> Result<String, reqwest::Error> {
         let url = format!("https://adventofcode.com/{}/day/{}/input", year, day);
         let res = self.client.request(Method::GET, &url)
             .send()
@@ -108,67 +92,26 @@ impl AocClient {
 
         self.try_save_challenge_to_fs(year, day, &res)
             .unwrap_or_else(|err| {
-                crate::core::io::print_debug(format_args!("Failed to cache input: {}", err));
+                crate::io::print_debug(format_args!("Failed to cache input: {}", err));
             });
 
         Ok(res)
     }
 }
 
-impl<I: Input> AocClientError<I> {
-    fn from_input_error(err: I::ParseError) -> Self {
-        AocClientError::InputError(Box::new(err))
-    }
-}
-
-impl From<reqwest::Error> for AocClientErrorRaw {
-    fn from(err: reqwest::Error) -> Self {
-        AocClientErrorRaw::Request(err)
-    }
-}
-
-impl<I: Input> From<reqwest::Error> for AocClientError<I> {
+impl From<reqwest::Error> for AocClientError {
     fn from(err: reqwest::Error) -> Self {
         AocClientError::Request(err)
     }
 }
 
-impl From<io::Error> for AocClientErrorRaw {
-    fn from(err: io::Error) -> Self {
-        AocClientErrorRaw::Io(err)
-    }
-}
-
-impl<I: Input> From<io::Error> for AocClientError<I> {
+impl From<io::Error> for AocClientError {
     fn from(err: io::Error) -> Self {
         AocClientError::Io(err)
     }
 }
 
-impl<I: Input> From<AocClientErrorRaw> for AocClientError<I> {
-    fn from(err: AocClientErrorRaw) -> Self {
-        match err {
-            AocClientErrorRaw::Request(err) => AocClientError::Request(err),
-            AocClientErrorRaw::Io(err) => AocClientError::Io(err),
-        }
-    }
-}
-
-impl<I: Input> fmt::Debug for AocClientError<I> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut tup = f.debug_tuple("AocClientError");
-
-        match self {
-            AocClientError::Request(err) => tup.field(err),
-            AocClientError::Io(err) => tup.field(err),
-            AocClientError::InputError(err) => tup.field(err),
-        };
-
-        tup.finish()
-    }
-}
-
-impl<I: Input> fmt::Display for AocClientError<I> {
+impl fmt::Display for AocClientError{
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             AocClientError::Request(err) => {
@@ -179,44 +122,15 @@ impl<I: Input> fmt::Display for AocClientError<I> {
                 write!(f, "IO error: ")?;
                 fmt::Display::fmt(err, f)
             }
-            AocClientError::InputError(err) => {
-                write!(f, "Input error: ")?;
-                fmt::Display::fmt(err, f)
-            }
         }
     }
 }
 
-impl fmt::Display for AocClientErrorRaw {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            AocClientErrorRaw::Request(err) => {
-                write!(f, "Request error: ")?;
-                fmt::Display::fmt(err, f)
-            }
-            AocClientErrorRaw::Io(err) => {
-                write!(f, "IO error: ")?;
-                fmt::Display::fmt(err, f)
-            }
-        }
-    }
-}
-
-impl<I: Input> std::error::Error for AocClientError<I> {
+impl std::error::Error for AocClientError{
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             AocClientError::Request(err) => Some(err),
             AocClientError::Io(err) => Some(err),
-            AocClientError::InputError(err) => Some(err.as_ref()),
-        }
-    }
-}
-
-impl std::error::Error for AocClientErrorRaw {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            AocClientErrorRaw::Request(err) => Some(err),
-            AocClientErrorRaw::Io(err) => Some(err),
         }
     }
 }

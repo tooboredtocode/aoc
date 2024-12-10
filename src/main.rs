@@ -1,16 +1,12 @@
 use std::env;
-use inquire::Select;
+use aoc_lib::{io, AocClient};
 
-use crate::core::{io, AocClient};
-use crate::util::handle_inquire_res;
-use crate::years::Years;
 use crate::cli::{Cli, Commands};
 
-mod core;
+mod cli;
 mod util;
 mod years;
-mod y2024;
-mod cli;
+mod tui;
 
 #[tokio::main]
 async fn main() {
@@ -23,34 +19,7 @@ async fn main() {
         return;
     };
     let client = AocClient::new(session_cookie);
+    let years = years::years();
 
-    loop {
-        let year = Years::get_year(benchmark);
-        let Ok(year) = handle_inquire_res(year) else {
-            return;
-        };
-
-        year_loop(year, &client, benchmark).await;
-    }
-}
-
-async fn year_loop(year: Years, client: &AocClient, benchmark: bool) {
-    let message = if benchmark {
-        "Which day do you want to benchmark?"
-    } else {
-        "Which day do you want to run?"
-    };
-
-    loop {
-        let day = Select::new(message, year.available_days())
-            .prompt();
-        let Ok(day) = handle_inquire_res(day) else {
-            return;
-        };
-        if benchmark {
-            year.benchmark_day(day, client).await;
-        } else {
-            year.run_day(day, client).await;
-        }
-    }
+    tui::run_tui(&years, &client, benchmark).await;
 }
