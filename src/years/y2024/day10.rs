@@ -1,8 +1,8 @@
-use itertools::Itertools;
-use aoc_lib::{create_puzzle_result, impl_puzzle_result};
-use crate::util::matrix::{Matrix, MatrixEntry};
 use crate::util::matrix::ext::Yield;
+use crate::util::matrix::{Matrix, MatrixEntry};
 use crate::util::StringError;
+use aoc_lib::create_puzzle_result;
+use itertools::Itertools;
 
 create_solution!(10);
 

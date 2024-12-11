@@ -2,6 +2,7 @@ mod input;
 mod base;
 mod solution;
 mod result;
+mod macros;
 
 pub use base::Puzzle;
 pub use input::PuzzleInput;
