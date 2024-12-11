@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use aoc_lib::{SolutionPart1, SolutionPart2};
 use crate::util::matrix::{Matrix, MatrixEntry};
 use crate::util::StringError;
@@ -124,8 +124,8 @@ impl aoc_lib::PuzzleResult for PuzzleResult {
 }
 
 impl PuzzleInput {
-    fn bucket_antennas(&self) -> HashMap<char, Vec<MatrixEntry<Option<Antenna>>>> {
-        let mut buckets: HashMap<_, Vec<_>> = HashMap::new();
+    fn bucket_antennas(&self) -> FxHashMap<char, Vec<MatrixEntry<Option<Antenna>>>> {
+        let mut buckets: FxHashMap<_, Vec<_>> = FxHashMap::default();
 
         for (entry, id) in self.antennas
             .entry_iter()

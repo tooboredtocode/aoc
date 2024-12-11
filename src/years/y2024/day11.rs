@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use itertools::{Either, Itertools};
 use aoc_lib::create_puzzle_result;
 use crate::util::num::NumUtils;
@@ -20,7 +20,7 @@ create_puzzle_result!(PuzzleResultPart1, "Stones after 25 blinks: {}", stones: u
 create_puzzle_result!(PuzzleResultPart2, "Stones after 75 blinks: {}", stones: u64);
 
 create_solution_part1!((input: PuzzleInput) -> PuzzleResultPart1 {
-    let mut cache = HashMap::new();
+    let mut cache = FxHashMap::default();
     let stones = input.stones.iter()
         .map(|stone| stone.count_stones_after_n_blinks(25, &mut cache))
         .sum();
@@ -29,7 +29,7 @@ create_solution_part1!((input: PuzzleInput) -> PuzzleResultPart1 {
 });
 
 create_solution_part2!((input: PuzzleInput) -> PuzzleResultPart2 {
-    let mut cache = HashMap::new();
+    let mut cache = FxHashMap::default();
     let stones = input.stones.iter()
         .map(|stone| stone.count_stones_after_n_blinks(75, &mut cache))
         .sum();
@@ -42,7 +42,7 @@ impl Stone {
         Self { value }
     }
 
-    fn count_stones_after_n_blinks(&self, n: u64, memoized: &mut HashMap<(u64, u64), u64>) -> u64 {
+    fn count_stones_after_n_blinks(&self, n: u64, memoized: &mut FxHashMap<(u64, u64), u64>) -> u64 {
         if n == 0 {
             // No more blinks, return 1 since they cannot be split further
             return 1;
@@ -127,7 +127,7 @@ mod test {
     #[test]
     fn test_run_0_times() {
         let input = PuzzleInput::from_input(INPUT).expect("Input should be valid");
-        let mut cache = HashMap::new();
+        let mut cache = FxHashMap::default();
 
         let result = input.stones.iter()
             .map(|stone| stone.count_stones_after_n_blinks(0, &mut cache))
@@ -139,7 +139,7 @@ mod test {
     #[test]
     fn test_run_2_times() {
         let input = PuzzleInput::from_input(INPUT).expect("Input should be valid");
-        let mut cache = HashMap::new();
+        let mut cache = FxHashMap::default();
 
         let result = input.stones.iter()
             .map(|stone| stone.count_stones_after_n_blinks(2, &mut cache))
@@ -152,7 +152,7 @@ mod test {
     #[test]
     fn test_run_25_times() {
         let input = PuzzleInput::from_input(INPUT).expect("Input should be valid");
-        let mut cache = HashMap::new();
+        let mut cache = FxHashMap::default();
 
         let result = input.stones.iter()
             .map(|stone| stone.count_stones_after_n_blinks(25, &mut cache))

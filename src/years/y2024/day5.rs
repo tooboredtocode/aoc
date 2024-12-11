@@ -145,25 +145,25 @@ impl aoc_lib::PuzzleInput for PuzzleInput {
 // Note: we may not use all methods, but they should remain for completeness’s sake
 #[allow(dead_code)]
 mod rules {
-    use std::collections::{HashMap, HashSet};
+    use rustc_hash::{FxHashMap, FxHashSet};
 
     #[derive(Debug)]
     pub struct Rules {
-        mapping: HashMap<u32, RuleOrdering>,
+        mapping: FxHashMap<u32, RuleOrdering>,
     }
 
     #[derive(Debug, Clone)]
     struct RuleOrdering {
         /// The pages that must come before this page
-        before: HashSet<u32>,
+        before: FxHashSet<u32>,
         /// The pages that must come after this page
-        after: HashSet<u32>,
+        after: FxHashSet<u32>,
     }
 
     impl Rules {
         pub(super) fn new() -> Self {
             Self {
-                mapping: HashMap::new(),
+                mapping: FxHashMap::default(),
             }
         }
 
@@ -215,8 +215,8 @@ mod rules {
     impl RuleOrdering {
         fn new() -> Self {
             Self {
-                before: HashSet::new(),
-                after: HashSet::new(),
+                before: FxHashSet::default(),
+                after: FxHashSet::default(),
             }
         }
     }
