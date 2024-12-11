@@ -11,16 +11,29 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn iter() -> impl Iterator<Item=Direction> {
-        [
-            Direction::Up,
-            Direction::UpRight,
-            Direction::Right,
-            Direction::DownRight,
-            Direction::Down,
-            Direction::DownLeft,
-            Direction::Left,
-            Direction::UpLeft,
-        ].iter().copied()
+    pub fn iter(allow_diagonal: bool) -> impl Iterator<Item=Direction> {
+        if allow_diagonal {
+            [
+                Direction::Up,
+                Direction::UpRight,
+                Direction::Right,
+                Direction::DownRight,
+                Direction::Down,
+                Direction::DownLeft,
+                Direction::Left,
+                Direction::UpLeft,
+            ].iter().copied()
+        } else {
+            [
+                Direction::Up,
+                Direction::Right,
+                Direction::Down,
+                Direction::Left,
+            ].iter().copied()
+        }
+    }
+
+    pub fn iter_all() -> impl Iterator<Item=Direction> {
+        Self::iter(true)
     }
 }

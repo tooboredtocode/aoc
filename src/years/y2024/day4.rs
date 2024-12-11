@@ -19,7 +19,7 @@ impl SolutionPart1 for PuzzleSolution {
             .entry_iter()
             .filter(|item| item.get() == &'X')
             .map(|item| {
-                Direction::iter()
+                Direction::iter_all()
                     .filter(|dir| {
                         let potential = item.adjacent_iter(*dir)
                             .map(|adjacent| *adjacent.get())

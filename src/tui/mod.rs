@@ -79,12 +79,6 @@ async fn year_loop(year: Arc<Year>, client: &AocClient, benchmark: bool) {
 }
 
 async fn day_prompt(day: PartialDay, client: &AocClient, benchmark: bool) {
-    let message = if benchmark {
-        "Which part do you want to benchmark?"
-    } else {
-        "Which part do you want to run?"
-    };
-
     let day = match day {
         PartialDay::Partial(day) => {
             if benchmark {
@@ -97,7 +91,13 @@ async fn day_prompt(day: PartialDay, client: &AocClient, benchmark: bool) {
         PartialDay::Solved(day) => day
     };
 
-    let part = Select::new(message, Part::vec())
+    if benchmark {
+        day.bench_part1(client, 50).await;
+        day.bench_part2(client, 50).await;
+        return;
+    }
+
+    let part = Select::new("Which part do you want to run?", Part::vec())
         .prompt();
     let Ok(part) = handle_inquire_res(part) else {
         return;

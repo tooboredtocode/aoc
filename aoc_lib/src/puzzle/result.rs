@@ -25,3 +25,15 @@ macro_rules! impl_puzzle_result {
         }
     };
 }
+
+#[macro_export]
+macro_rules! create_puzzle_result {
+    ($t:ident, $f:literal $(, $p:ident $(: $pty:ty)? )*) => {
+        #[derive(Debug)]
+        pub struct $t {
+            $( $($p: $pty)? ),*
+        }
+
+        impl_puzzle_result!($t, $f $(, $p)*);
+    };
+}

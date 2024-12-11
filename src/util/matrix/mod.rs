@@ -4,6 +4,7 @@ mod entry;
 mod distance;
 mod matrix;
 mod common;
+pub mod ext;
 
 pub use entry::MatrixEntry;
 pub use distance::Distance;

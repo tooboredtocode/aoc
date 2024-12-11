@@ -147,32 +147,12 @@ impl aoc_lib::PuzzleInput for PuzzleInput {
     type ParseError = StringError;
 
     fn from_input(input: &str) -> Result<Self, Self::ParseError> {
-        let line_length = input.lines().next().map_or(0, |line| line.chars().count());
-        if line_length == 0 {
-            return Err(StringError::new("No lines in the input"));
-        }
-        if input.lines().any(|line| line.chars().count() != line_length) {
-            return Err(StringError::new("Lines in the input have different lengths"));
-        }
-        let row_height = input.lines().count();
-        if row_height == 0 {
-            return Err(StringError::new("No rows in the input"));
-        }
-
-        let mut antennas = Matrix::new(row_height, line_length, None);
-
-        for (y, line) in input.lines().enumerate() {
-            for (x, c) in line.chars().enumerate() {
-                match c {
-                    'A'..='Z'
-                    | 'a'..='z'
-                    | '0'..='9' => {
-                        antennas[(y, x)] = Some(Antenna { id: c });
-                    },
-                    _ => {}
-                }
-            }
-        }
+        let antennas = Matrix::from_string_chars(input.trim(), |c| match c {
+            'A'..='Z'
+            | 'a'..='z'
+            | '0'..='9' => Some(Antenna { id: c }),
+            _ => None,
+        })?;
 
         Ok(PuzzleInput { antennas })
     }
