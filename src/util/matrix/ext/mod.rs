@@ -1,4 +1,6 @@
 mod try_yield;
+mod find_all_connected;
+mod util;
 
 use itertools::Itertools;
 use crate::util::{matrix, StringError};

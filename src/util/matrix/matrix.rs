@@ -100,6 +100,8 @@ impl<T> Matrix<T> {
     }
 
     /// Get an iterator over all entries in the matrix.
+    ///
+    /// Note: The iterator will always yield the entries in row-major order.
     pub fn entry_iter(&self) -> impl Iterator<Item=MatrixEntry<T>> {
         (0..self.height).flat_map(move |y|
             (0..self.width).map(move |x| {

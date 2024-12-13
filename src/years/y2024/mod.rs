@@ -52,6 +52,7 @@ mod day8;
 mod day9;
 mod day10;
 mod day11;
+mod day12;
 mod day13;
 
 pub fn year2024() -> Year {
@@ -68,6 +69,7 @@ pub fn year2024() -> Year {
         Day::solved::<day9::PuzzleSolution>(),
         Day::solved::<day10::PuzzleSolution>(),
         Day::solved::<day11::PuzzleSolution>(),
+        Day::solved::<day12::PuzzleSolution>(),
         Day::solved::<day13::PuzzleSolution>(),
     ]);
     year
