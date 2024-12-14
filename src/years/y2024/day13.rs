@@ -5,6 +5,7 @@ use nalgebra::{Matrix2, Vector2};
 
 create_solution!(13);
 create_alt_solution!(13, MultipleSolutions, "Handle Multiple Solutions");
+create_alt_solution!(13, NoMatrix, "No Matrix Equations");
 
 #[derive(Debug)]
 pub struct PuzzleInput {
@@ -52,6 +53,18 @@ create_alt_solution_part1!(MultipleSolutions, (input: PuzzleInput) -> PuzzleResu
     Ok(PuzzleResult { solvable, tokens })
 });
 
+create_alt_solution_part1!(NoMatrix, (input: PuzzleInput) -> PuzzleResult {
+    let mut solvable = 0;
+
+    let tokens: u64 = input.arcade_games.iter()
+        .filter_map(|game| game.find_solution_no_matrix())
+        .inspect(|_| solvable += 1)
+        .map(|(a, b)| a * 3 + b)
+        .sum();
+
+    Ok(PuzzleResult { solvable, tokens })
+});
+
 const ADD_PART_2: Vector2<u64> = Vector2::new(10000000000000, 10000000000000);
 
 create_solution_part2!((input: PuzzleInput) -> PuzzleResult {
@@ -91,6 +104,23 @@ create_alt_solution_part2!(MultipleSolutions, (input: PuzzleInput) -> PuzzleResu
     Ok(PuzzleResult { solvable, tokens })
 });
 
+create_alt_solution_part2!(NoMatrix, (input: PuzzleInput) -> PuzzleResult {
+    let mut solvable = 0;
+
+    let tokens: u64 = input.arcade_games.iter()
+        .map(|game| {
+            let mut game = *game;
+            game.prize_location += ADD_PART_2;
+            game
+        })
+        .filter_map(|game| game.find_solution_no_matrix())
+        .inspect(|_| solvable += 1)
+        .map(|(a, b)| a * 3 + b)
+        .sum();
+
+    Ok(PuzzleResult { solvable, tokens })
+});
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 struct MultipleSol {
     // The Solution with the least amount of moves for button A.
@@ -125,6 +155,26 @@ impl ArcadeGame {
         // Check if the solution is also a valid integer solution.
         if self.is_valid_move(a_moves, b_moves) {
             Some((a_moves, b_moves))
+        } else {
+            None
+        }
+    }
+
+    fn find_solution_no_matrix(&self) -> Option<(u64, u64)> {
+        let a = self.button_a.distance_moved;
+        let b = self.button_b.distance_moved;
+        let res = self.prize_location;
+
+        let det = a.x * b.y - a.y * b.x;
+        if det == 0 {
+            return None;
+        }
+
+        let res_a = (res.x * b.y - res.y * b.x) / det;
+        let res_b = (a.x * res.y - a.y * res.x) / det;
+
+        if self.is_valid_move(res_a, res_b) {
+            Some((res_a, res_b))
         } else {
             None
         }
@@ -335,21 +385,6 @@ mod tests {
             button_b: Button { distance_moved: Vector2::new(22, 67) },
             prize_location: Vector2::new(8400, 5400),
         };
-
-        let expected = Some(Either::Left((80, 40)));
-        let actual = game.find_solution_alt();
-        assert_eq!(expected, actual, "Got unexpected solution");
-    }
-
-    #[test]
-    fn test_solution_5() {
-        let game = ArcadeGame {
-            button_a: Button { distance_moved: Vector2::new(2, 2) },
-            button_b: Button { distance_moved: Vector2::new(3, 3) },
-            prize_location: Vector2::new(9999999996999997, 9999999996999997)
-        };
-
-        println!("{:?}", game.calculate_position(2, 3333333332333331));
 
         let expected = Some(Either::Left((80, 40)));
         let actual = game.find_solution_alt();

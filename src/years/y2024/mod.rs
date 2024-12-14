@@ -112,7 +112,9 @@ pub fn year2024() -> Year {
         Day::solved::<day11::PuzzleSolution>(),
         Day::solved::<day12::PuzzleSolution>(),
         Day::solved::<day13::PuzzleSolution>(),
-        Day::solved::<day13::MultipleSolutions>(), // Alternative solution
+        // Alternate solutions
+        Day::solved::<day13::MultipleSolutions>(),
+        Day::solved::<day13::NoMatrix>(),
     ]);
     year
 }
