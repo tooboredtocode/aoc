@@ -35,6 +35,14 @@ impl Day {
         Self::Solved(SolvedDay::<P>::boxed())
     }
 
+    pub fn is_unsolved(&self) -> bool {
+        match self {
+            Self::Unsolved(_) => true,
+            Self::Partial(_) => false,
+            Self::Solved(_) => false,
+        }
+    }
+
     pub fn is_partial(&self) -> bool {
         match self {
             Self::Unsolved(_) => false,
@@ -79,6 +87,14 @@ impl Day {
             Self::Unsolved(day) => day.day(),
             Self::Partial(day) => day.day(),
             Self::Solved(day) => day.day(),
+        }
+    }
+
+    pub fn alt(&self) -> Option<&'static str> {
+        match self {
+            Self::Unsolved(day) => day.alt(),
+            Self::Partial(day) => day.alt(),
+            Self::Solved(day) => day.alt(),
         }
     }
 }

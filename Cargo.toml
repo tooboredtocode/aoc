@@ -22,6 +22,8 @@ aoc_lib = { path = "aoc_lib" }
 
 tokio = { version = "1.0", features = ["full"] }
 
+approx = "0.5"
+cfg-if = "1.0"
 itertools = "0.13"
 nalgebra = "0.33"
 rustc-hash = "2.1"

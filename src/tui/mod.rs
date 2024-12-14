@@ -10,6 +10,7 @@ mod select;
 
 use util::handle_inquire_res;
 use select::{DisplayPartialDay, DisplayYear, Part};
+use crate::tui::select::DisplayAlternatives;
 
 pub async fn run_tui(years: &Years, client: &AocClient, benchmark: bool) {
     loop {
@@ -74,28 +75,76 @@ async fn year_loop(year: Arc<Year>, client: &AocClient, benchmark: bool) {
             return;
         };
 
-        day_prompt(day, client, benchmark).await;
+        let alternatives = year.get_alternatives_for(day.day());
+        if let Some(alternatives) = alternatives {
+            let alternatives = alternatives.iter()
+                .filter_map(|(&key, day)|
+                    day.try_into_partial()
+                        .map(|day| (key, day))
+                )
+                .map(|(key, day)| DisplayAlternatives::new(key, day))
+                .collect::<Vec<_>>();
+
+            if alternatives.is_empty() {
+                run_day(day, client, benchmark).await;
+                continue;
+            }
+
+            if benchmark {
+                println!("Default implementation:");
+                bench_day(day, client).await;
+
+                for (key, day) in alternatives.into_iter().map(|day| (day.alternative(), day.day())) {
+                    println!("{}:", key);
+                    bench_day(day, client).await;
+                }
+
+                continue;
+            }
+
+            let confirm = Confirm::new("The day has alternative implementations. Do you want to run one of them?")
+                .with_default(false)
+                .prompt();
+            let Ok(confirm) = handle_inquire_res(confirm) else {
+                return;
+            };
+
+            if !confirm {
+                run_day(day, client, benchmark).await;
+                continue;
+            }
+
+            let alternative = Select::new("Select alternative", alternatives)
+                .prompt()
+                .map(|day| day.day());
+            let Ok(alternative) = handle_inquire_res(alternative) else {
+                continue;
+            };
+
+            run_day(alternative, client, benchmark).await;
+            continue;
+        }
+
+        run_day(day, client, benchmark).await;
     }
 }
 
-async fn day_prompt(day: PartialDay, client: &AocClient, benchmark: bool) {
+async fn run_day(day: PartialDay, client: &AocClient, benchmark: bool) {
+    if benchmark {
+        bench_day(day, client).await;
+    } else {
+        day_prompt(day, client).await;
+    }
+}
+
+async fn day_prompt(day: PartialDay, client: &AocClient) {
     let day = match day {
         PartialDay::Partial(day) => {
-            if benchmark {
-                day.bench_part1(client, 50).await;
-            } else {
-                day.run_part1(client).await;
-            }
+            day.run_part1(client).await;
             return;
         }
         PartialDay::Solved(day) => day
     };
-
-    if benchmark {
-        day.bench_part1(client, 50).await;
-        day.bench_part2(client, 50).await;
-        return;
-    }
 
     let part = Select::new("Which part do you want to run?", Part::vec())
         .prompt();
@@ -103,10 +152,20 @@ async fn day_prompt(day: PartialDay, client: &AocClient, benchmark: bool) {
         return;
     };
 
-    match (part, benchmark) {
-        (Part::Part1, true) => day.bench_part1(client, 50).await,
-        (Part::Part1, false) => day.run_part1(client).await,
-        (Part::Part2, true) => day.bench_part2(client, 50).await,
-        (Part::Part2, false) => day.run_part2(client).await,
+    match part {
+        Part::Part1 => day.run_part1(client).await,
+        Part::Part2 => day.run_part2(client).await,
+    }
+}
+
+async fn bench_day(day: PartialDay, client: &AocClient) {
+    match day {
+        PartialDay::Partial(day) => {
+            day.bench_part1(client, 50).await;
+        }
+        PartialDay::Solved(day) => {
+            day.bench_part1(client, 50).await;
+            day.bench_part2(client, 50).await;
+        }
     }
 }

@@ -8,6 +8,7 @@ use crate::puzzle::{SolutionPart1Ext};
 pub trait PartialSolvedDayTrait: sealed::Sealed {
     fn year(&self) -> u16;
     fn day(&self) -> u8;
+    fn alt(&self) -> Option<&'static str>;
 
     async fn run_part1(&self, client: &AocClient);
     async fn bench_part1(&self, client: &AocClient, iterations: u32);
@@ -43,6 +44,10 @@ impl<P: SolutionPart1> PartialSolvedDayTrait for PartialSolvedDay<P> {
 
     fn day(&self) -> u8 {
         P::DAY
+    }
+
+    fn alt(&self) -> Option<&'static str> {
+        P::ALT
     }
 
     async fn run_part1(&self, client: &AocClient) {

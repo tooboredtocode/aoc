@@ -95,6 +95,8 @@ name = "aoc"
 version = "0.1.0"
 dependencies = [
  "aoc_lib",
+ "approx",
+ "cfg-if",
  "clap",
  "inquire",
  "itertools",

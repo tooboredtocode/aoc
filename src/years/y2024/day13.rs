@@ -1,11 +1,10 @@
-use std::cmp::min;
-use std::iter;
-use crate::util::{StringError};
+use crate::util::StringError;
 use aoc_lib::create_puzzle_result;
-use itertools::{Itertools, Either};
+use itertools::{Either, Itertools};
 use nalgebra::{Matrix2, Vector2};
 
 create_solution!(13);
+create_alt_solution!(13, MultipleSolutions, "Handle Multiple Solutions");
 
 #[derive(Debug)]
 pub struct PuzzleInput {
@@ -30,9 +29,24 @@ create_solution_part1!((input: PuzzleInput) -> PuzzleResult {
     let mut solvable = 0;
 
     let tokens: u64 = input.arcade_games.iter()
-        .filter_map(|game| game.min_tokens(3, 1))
+        .filter_map(|game| game.find_solution())
         .inspect(|_| solvable += 1)
         .map(|(a, b)| a * 3 + b)
+        .sum();
+
+    Ok(PuzzleResult { solvable, tokens })
+});
+
+create_alt_solution_part1!(MultipleSolutions, (input: PuzzleInput) -> PuzzleResult {
+    let mut solvable = 0;
+
+    let tokens: u64 = input.arcade_games.iter()
+        .filter_map(|game| game.find_solution_alt())
+        .inspect(|_| solvable += 1)
+        .map(|solution| match solution {
+            Either::Left((a, b)) => a * 3 + b,
+            Either::Right(MultipleSol { min_a, .. }) => min_a.0 * 3 + min_a.1,
+        })
         .sum();
 
     Ok(PuzzleResult { solvable, tokens })
@@ -49,7 +63,7 @@ create_solution_part2!((input: PuzzleInput) -> PuzzleResult {
             game.prize_location += ADD_PART_2;
             game
         })
-        .filter_map(|game| game.min_tokens(3, 1))
+        .filter_map(|game| game.find_solution())
         .inspect(|_| solvable += 1)
         .map(|(a, b)| a * 3 + b)
         .sum();
@@ -57,109 +71,143 @@ create_solution_part2!((input: PuzzleInput) -> PuzzleResult {
     Ok(PuzzleResult { solvable, tokens })
 });
 
+create_alt_solution_part2!(MultipleSolutions, (input: PuzzleInput) -> PuzzleResult {
+    let mut solvable = 0;
+
+    let tokens: u64 = input.arcade_games.iter()
+        .map(|game| {
+            let mut game = *game;
+            game.prize_location += ADD_PART_2;
+            game
+        })
+        .filter_map(|game| game.find_solution_alt())
+        .inspect(|_| solvable += 1)
+        .map(|solution| match solution {
+            Either::Left((a, b)) => a * 3 + b,
+            Either::Right(MultipleSol { min_a, .. }) => min_a.0 * 3 + min_a.1,
+        })
+        .sum();
+
+    Ok(PuzzleResult { solvable, tokens })
+});
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+struct MultipleSol {
+    // The Solution with the least amount of moves for button A.
+    min_a: (u64, u64),
+    // The Solution with the least amount of moves for button B.
+    min_b: (u64, u64),
+}
+
 impl ArcadeGame {
-    /// Finds the minimum number of moves needed to win the prize.
-    /// The minimum is determined by the cost of the buttons.
-    ///
-    /// Returns `None` if the prize is not achievable.
-    fn min_tokens(&self, button_a_cost: u64, button_b_cost: u64) -> Option<(u64, u64)> {
-        self.find_possible_solutions()
-            .min_by(|&(first_a, first_b), &(second_a, second_b)| {
-                let first_cost = first_a * button_a_cost + first_b * button_b_cost;
-                let second_cost = second_a * button_a_cost + second_b * button_b_cost;
-
-                first_cost.cmp(&second_cost)
-            })
-    }
-
     #[allow(non_snake_case)]
-    fn find_possible_solutions(&self) -> impl Iterator<Item=(u64, u64)> + '_ {
+    fn find_solution(&self) -> Option<(u64, u64)> {
         let A = Matrix2::from_columns(&[
             self.button_a.distance_moved.map(|x| x as f64),
             self.button_b.distance_moved.map(|x| x as f64)
         ]);
         let b = self.prize_location.map(|x| x as f64);
 
-        // Try to check if there is a unique solution.
-        if let Some(x) = A.lu().solve(&b) {
-            let move_a = x.x.round() as u64;
-            let move_b = x.y.round() as u64;
+        let Some(A_inv) = A.try_inverse() else {
+            return None;
+        };
 
-            // Either the solution would be an integer, or the prize is not solvable with an integer number of moves.
-            // (If the solution is an integer, the round function should not change the value.)
-            return if self.is_valid_move(move_a, move_b) {
-                Some(Either::Left(iter::once((move_a, move_b))))
-                    .into_iter()
-                    .flatten()
-            } else {
-                None.into_iter()
-                    .flatten()
-            }
+        let solution = A_inv * b;
+
+        if solution.x < 0.0 || solution.y < 0.0 {
+            // The solution includes negative moves, which is not allowed.
+            return None;
         }
 
-        // The matrix is not invertible, so the prize either has an infinite number of solutions or
-        // no solution.
-        let x = A.svd(true, true)
-            .solve(&b, 0.0)
-            .expect("We already calculated the singular vectors");
+        let a_moves = solution.x.round() as u64;
+        let b_moves = solution.y.round() as u64;
 
-        if !b.relative_eq(&(A * x), 1e-6, 1e-6) {
-            // The prize has no solution, we only got an approximation.
-            return None.into_iter()
-                .flatten();
+        // Check if the solution is also a valid integer solution.
+        if self.is_valid_move(a_moves, b_moves) {
+            Some((a_moves, b_moves))
+        } else {
+            None
         }
-
-        // The maximum number of moves for the A button before we overshoot the prize.
-        let max_a = min(
-            self.prize_location.x / self.button_a.distance_moved.x,
-            self.prize_location.y / self.button_a.distance_moved.y
-        );
-
-        // Iterate over all possible moves for the A button and
-        // calculate the corresponding moves for the B button.
-        let res = (0..=max_a)
-            .filter_map(|a_moves| {
-                let remaining = self.prize_location - self.button_a.distance_moved(a_moves);
-                if self.button_b.distance_moved.x == 0 && self.button_b.distance_moved.y == 0 {
-                    // The B button does not move, so we can only solve the prize if the remaining
-                    // distance is zero.
-                    if self.is_valid_move(a_moves, 0) {
-                        Some((a_moves, 0))
-                    } else {
-                        None
-                    }
-                } else if self.button_b.distance_moved.x == 0 {
-                    // The B button only moves in the y direction.
-                    if self.is_valid_move(a_moves, remaining.y / self.button_b.distance_moved.y) {
-                        Some((a_moves, remaining.y / self.button_b.distance_moved.y))
-                    } else {
-                        None
-                    }
-                } else if self.button_b.distance_moved.y == 0 {
-                    // The B button only moves in the x direction.
-                    if self.is_valid_move(a_moves, remaining.x / self.button_b.distance_moved.x) {
-                        Some((a_moves, remaining.x / self.button_b.distance_moved.x))
-                    } else {
-                        None
-                    }
-                } else {
-                    // The B button moves in both directions.
-                    let b_moves_x = remaining.x / self.button_b.distance_moved.x;
-                    let b_moves_y = remaining.y / self.button_b.distance_moved.y;
-
-                    if b_moves_x == b_moves_y && self.is_valid_move(a_moves, b_moves_x) {
-                        Some((a_moves, b_moves_x))
-                    } else {
-                        None
-                    }
-                }
-            });
-
-        Some(Either::Right(res))
-            .into_iter()
-            .flatten()
     }
 
+    #[allow(non_snake_case)]
+    fn find_solution_alt(&self) -> Option<Either<(u64, u64), MultipleSol>> {
+        let A = Matrix2::from_columns(&[
+            self.button_a.distance_moved.map(|x| x as f64),
+            self.button_b.distance_moved.map(|x| x as f64)
+        ]);
+        let b = self.prize_location.map(|x| x as f64);
+
+        let Some(A_inv) = A.try_inverse() else {
+            use approx::RelativeEq;
+
+            // The matrix is singular, so there is no unique solution.
+            let a_float = self.button_a.distance_moved
+                .map(|x| x as f64);
+
+            if !b.angle(&a_float).relative_eq(&0.0, 1e-3, 1e-3) {
+                // The prize location is not on the line between the two buttons.
+                // -> There is no solution.
+                return None;
+            }
+
+            let factor_a = self.button_a.distance_moved.x;
+            let factor_b = self.button_b.distance_moved.x;
+            let factor_result = self.prize_location.x;
+
+            let max_a = factor_result / factor_a;
+            let max_b = factor_result / factor_b;
+
+            let min_a = (0..=max_a)
+                .map(|a| {
+                    let b = (factor_result - factor_a * a) / factor_b;
+                    (a, b)
+                })
+                .find(|(a, b)| self.is_valid_move(*a, *b));
+
+            let min_b = (0..=max_b)
+                .map(|b| {
+                    let a = (factor_result - factor_b * b) / factor_a;
+                    (a, b)
+                })
+                .find(|(a, b)| self.is_valid_move(*a, *b));
+
+            return match (min_a, min_b) {
+                (Some(min_a), Some(min_b)) => {
+                    Some(Either::Right(MultipleSol { min_a, min_b }))
+                },
+                (Some(min_a), None) => {
+                    Some(Either::Left(min_a))
+                },
+                (None, Some(min_b)) => {
+                    Some(Either::Left(min_b))
+                },
+                (None, None) => {
+                    None
+                },
+            };
+        };
+
+        let solution = A_inv * b;
+
+        if solution.x < 0.0 || solution.y < 0.0 {
+            // The solution includes negative moves, which is not allowed.
+            return None;
+        }
+
+        let a_moves = solution.x.round() as u64;
+        let b_moves = solution.y.round() as u64;
+
+        // Check if the solution is also a valid integer solution.
+        if self.is_valid_move(a_moves, b_moves) {
+            Some(Either::Left((a_moves, b_moves)))
+        } else {
+            None
+        }
+    }
+}
+
+impl ArcadeGame {
     /// Checks if a combination of moves is valid.
     fn is_valid_move(&self, a_moves: u64, b_moves: u64) -> bool {
         let position = self.calculate_position(a_moves, b_moves);
@@ -177,13 +225,6 @@ impl ArcadeGame {
         let moves = Vector2::new(a_moves, b_moves);
 
         A * moves
-    }
-}
-
-impl Button {
-    /// Returns the distance moved by the button with the given number of moves.
-    pub fn distance_moved(&self, moves: u64) -> Vector2<u64> {
-        self.distance_moved * moves
     }
 }
 
@@ -241,5 +282,77 @@ impl aoc_lib::PuzzleInput for PuzzleInput {
             .try_collect()?;
 
         Ok(Self { arcade_games })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_solution_1() {
+        let game = ArcadeGame {
+            button_a: Button { distance_moved: Vector2::new(1, 0) },
+            button_b: Button { distance_moved: Vector2::new(0, 1) },
+            prize_location: Vector2::new(2, 2),
+        };
+
+        let expected = Some(Either::Left((2, 2)));
+        let actual = game.find_solution_alt();
+        assert_eq!(expected, actual, "Got unexpected solution");
+    }
+
+    #[test]
+    fn test_solution_2() {
+        let game = ArcadeGame {
+            button_a: Button { distance_moved: Vector2::new(1, 0) },
+            button_b: Button { distance_moved: Vector2::new(1, 0) },
+            prize_location: Vector2::new(2, 2),
+        };
+
+        let expected = None;
+        let actual = game.find_solution_alt();
+        assert_eq!(expected, actual, "Got unexpected solution");
+    }
+
+    #[test]
+    fn test_solution_3() {
+        let game = ArcadeGame {
+            button_a: Button { distance_moved: Vector2::new(1, 1) },
+            button_b: Button { distance_moved: Vector2::new(2, 2) },
+            prize_location: Vector2::new(10, 10),
+        };
+
+        let expected = Some(Either::Right(MultipleSol { min_a: (0, 5), min_b: (10, 0) }));
+        let actual = game.find_solution_alt();
+        assert_eq!(expected, actual, "Got unexpected solution");
+    }
+
+    #[test]
+    fn test_solution_4() {
+        let game = ArcadeGame {
+            button_a: Button { distance_moved: Vector2::new(94, 34) },
+            button_b: Button { distance_moved: Vector2::new(22, 67) },
+            prize_location: Vector2::new(8400, 5400),
+        };
+
+        let expected = Some(Either::Left((80, 40)));
+        let actual = game.find_solution_alt();
+        assert_eq!(expected, actual, "Got unexpected solution");
+    }
+
+    #[test]
+    fn test_solution_5() {
+        let game = ArcadeGame {
+            button_a: Button { distance_moved: Vector2::new(2, 2) },
+            button_b: Button { distance_moved: Vector2::new(3, 3) },
+            prize_location: Vector2::new(9999999996999997, 9999999996999997)
+        };
+
+        println!("{:?}", game.calculate_position(2, 3333333332333331));
+
+        let expected = Some(Either::Left((80, 40)));
+        let actual = game.find_solution_alt();
+        assert_eq!(expected, actual, "Got unexpected solution");
     }
 }

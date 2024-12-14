@@ -44,6 +44,31 @@ impl std::fmt::Display for DisplayPartialDay {
     }
 }
 
+pub struct DisplayAlternatives {
+    alternative: &'static str,
+    day: PartialDay,
+}
+
+impl DisplayAlternatives {
+    pub fn new(alternative: &'static str, day: PartialDay) -> Self {
+        Self { alternative, day }
+    }
+
+    pub fn alternative(&self) -> &'static str {
+        self.alternative
+    }
+
+    pub fn day(self) -> PartialDay {
+        self.day
+    }
+}
+
+impl std::fmt::Display for DisplayAlternatives {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.alternative.fmt(f)
+    }
+}
+
 pub enum Part {
     Part1,
     Part2,

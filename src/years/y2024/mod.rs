@@ -13,6 +13,19 @@ macro_rules! create_solution {
     }
 }
 
+macro_rules! create_alt_solution {
+    ($day:literal, $name:ident, $alt:literal) => {
+        #[doc = concat!("https://adventofcode.com/2024/day/", $day)]
+        pub struct $name;
+
+        impl ::aoc_lib::puzzle::Puzzle for $name {
+            const DAY: u8 = $day;
+            const YEAR: u16 = 2024;
+            const ALT: Option<&'static str> = Some($alt);
+        }
+    }
+}
+
 macro_rules! create_solution_part1 {
     (($input_i:ident: $input:ty) -> $result:ty { $($code:tt)* }) => {
         impl ::aoc_lib::SolutionPart1 for PuzzleSolution {
@@ -27,9 +40,37 @@ macro_rules! create_solution_part1 {
     }
 }
 
+macro_rules! create_alt_solution_part1 {
+    ($name:ident, ($input_i:ident: $input:ty) -> $result:ty { $($code:tt)* }) => {
+        impl ::aoc_lib::SolutionPart1 for $name {
+            type Input = $input;
+            type SolveError = $crate::util::StringError;
+            type Result = $result;
+
+            fn solve($input_i: Self::Input) -> Result<Self::Result, Self::SolveError> {
+                $($code)*
+            }
+        }
+    }
+}
+
 macro_rules! create_solution_part2 {
     (($input_i:ident: $input:ty) -> $result:ty { $($code:tt)* }) => {
         impl ::aoc_lib::SolutionPart2 for PuzzleSolution {
+            type Input = $input;
+            type SolveError = $crate::util::StringError;
+            type Result = $result;
+
+            fn solve($input_i: Self::Input) -> Result<Self::Result, Self::SolveError> {
+                $($code)*
+            }
+        }
+    }
+}
+
+macro_rules! create_alt_solution_part2 {
+    ($name:ident, ($input_i:ident: $input:ty) -> $result:ty { $($code:tt)* }) => {
+        impl ::aoc_lib::SolutionPart2 for $name {
             type Input = $input;
             type SolveError = $crate::util::StringError;
             type Result = $result;
@@ -71,6 +112,7 @@ pub fn year2024() -> Year {
         Day::solved::<day11::PuzzleSolution>(),
         Day::solved::<day12::PuzzleSolution>(),
         Day::solved::<day13::PuzzleSolution>(),
+        Day::solved::<day13::MultipleSolutions>(), // Alternative solution
     ]);
     year
 }

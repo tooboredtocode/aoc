@@ -19,4 +19,8 @@ impl UnsolvedDay {
     pub fn day(&self) -> u8 {
         self.day
     }
+
+    pub fn alt(&self) -> Option<&'static str> {
+        None
+    }
 }
