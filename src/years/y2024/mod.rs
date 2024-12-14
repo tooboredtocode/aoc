@@ -95,6 +95,7 @@ mod day10;
 mod day11;
 mod day12;
 mod day13;
+mod day14;
 
 pub fn year2024() -> Year {
     let mut year = Year::new(2024);
@@ -115,6 +116,7 @@ pub fn year2024() -> Year {
         // Alternate solutions
         Day::solved::<day13::MultipleSolutions>(),
         Day::solved::<day13::NoMatrix>(),
+        Day::solved::<day14::PuzzleSolution>(),
     ]);
     year
 }
