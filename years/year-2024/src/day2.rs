@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
-use aoc_lib::{impl_puzzle_result, PuzzleInput, SolutionPart1, SolutionPart2};
-use crate::util::StringError;
+use aoc_lib::{SolutionPart1, SolutionPart2};
+use crate::prelude::*;
 
 create_solution!(2);
 
@@ -40,10 +40,9 @@ const DIFFERENCE_RANGE: RangeInclusive<u32> = 1..=3;
 
 impl SolutionPart1 for PuzzleSolution {
     type Input = Input;
-    type SolveError = StringError;
     type Result = PuzzleResult;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let valid_reports = input.reports.iter()
             .filter(|report| report.is_valid())
             .count();
@@ -54,10 +53,9 @@ impl SolutionPart1 for PuzzleSolution {
 
 impl SolutionPart2 for PuzzleSolution {
     type Input = Input;
-    type SolveError = StringError;
     type Result = PuzzleResult;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let valid_reports = input.reports.iter()
             .filter(|report| {
                 report.remove_one_iter()
@@ -70,19 +68,17 @@ impl SolutionPart2 for PuzzleSolution {
 }
 
 impl PuzzleInput for Input {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self> {
         let mut reports = Vec::new();
 
         for line in input.lines() {
             let levels = line.split_whitespace()
-                .map(|s| s.parse::<u32>());
+                .map(|s|
+                    s.parse::<u32>()
+                        .context("Failed to parse level")
+                );
 
-            let levels = match levels.collect::<Result<Vec<_>, _>>() {
-                Ok(levels) => levels,
-                Err(_) => return Err(StringError::new("AOC returned invalid input")),
-            };
+            let levels = levels.collect::<Result<Vec<_>, _>>()?;
 
             reports.push(Report { levels });
         }

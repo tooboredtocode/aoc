@@ -1,8 +1,7 @@
-use itertools::Itertools;
-use nalgebra::Vector2;
-use aoc_lib::{create_puzzle_result, PuzzleInput};
-use crate::util::matrix::{Direction, Matrix};
-use crate::util::StringError;
+use crate::prelude::*;
+use aoc_utils::itertools::Itertools;
+use aoc_utils::matrix::{Direction, Matrix};
+use aoc_utils::nalgebra::Vector2;
 
 create_solution!(14);
 
@@ -101,9 +100,7 @@ impl Input {
 }
 
 impl PuzzleInput for Input {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self> {
         let res = input.trim()
             .lines()
             .map(|line| {
@@ -111,7 +108,7 @@ impl PuzzleInput for Input {
                     .strip_prefix("p=")
                     .and_then(|rest| rest.split_once(" v="))
                 else {
-                    return Err(StringError::new("Failed to parse robot position and speed"))
+                    bail!("Failed to parse robot position and speed");
                 };
 
                 let position = parse_coords(pos)?;
@@ -125,19 +122,19 @@ impl PuzzleInput for Input {
     }
 }
 
-fn parse_coords<T>(input: &str) -> Result<Vector2<T>, StringError>
+fn parse_coords<T>(input: &str) -> Result<Vector2<T>>
 where
     T: std::str::FromStr,
     <T as std::str::FromStr>::Err: std::error::Error + Send + Sync + 'static
 
 {
     let (x, y) = input.split_once(',')
-        .ok_or(StringError::new("Failed to parse coordinates"))?;
+        .ok_or_else(|| Anyhow::msg("Failed to parse coordinates"))?;
 
     let x = x.parse()
-        .map_err(|e| StringError::with_cause("Failed to parse x coordinate", e))?;
+        .context("Failed to parse x coordinate")?;
     let y = y.parse()
-        .map_err(|e| StringError::with_cause("Failed to parse y coordinate", e))?;
+        .context("Failed to parse y coordinate")?;
 
     Ok(Vector2::new(x, y))
 

@@ -140,7 +140,8 @@ async fn run_day(day: PartialDay, client: &AocClient, benchmark: bool) {
 async fn day_prompt(day: PartialDay, client: &AocClient) {
     let day = match day {
         PartialDay::Partial(day) => {
-            day.run_part1(client).await;
+            let res = day.run_part1(client).await;
+            handle_res(res);
             return;
         }
         PartialDay::Solved(day) => day
@@ -152,20 +153,34 @@ async fn day_prompt(day: PartialDay, client: &AocClient) {
         return;
     };
 
-    match part {
+    let res = match part {
         Part::Part1 => day.run_part1(client).await,
         Part::Part2 => day.run_part2(client).await,
-    }
+    };
+
+    handle_res(res);
 }
 
 async fn bench_day(day: PartialDay, client: &AocClient) {
     match day {
         PartialDay::Partial(day) => {
-            day.bench_part1(client, 50).await;
+            let res = day.bench_part1(client, 50).await;
+            handle_res(res);
         }
         PartialDay::Solved(day) => {
-            day.bench_part1(client, 50).await;
-            day.bench_part2(client, 50).await;
+            let res = day.bench_part1(client, 50).await;
+            handle_res(res);
+            let res = day.bench_part2(client, 50).await;
+            handle_res(res);
         }
+    }
+}
+
+fn handle_res<E>(res: Result<(), E>)
+where
+    E: std::fmt::Debug + std::fmt::Display,
+{
+    if let Err(err) = res {
+        aoc_lib::io::print_error(format!("{:?}", err));
     }
 }

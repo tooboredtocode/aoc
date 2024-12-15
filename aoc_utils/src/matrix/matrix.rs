@@ -1,5 +1,5 @@
 use std::ops::{Index, IndexMut};
-use crate::util::matrix::MatrixEntry;
+use crate::matrix::MatrixEntry;
 
 #[derive(Debug)]
 pub struct Matrix<T> {
@@ -115,9 +115,18 @@ impl<T> Matrix<T> {
     /// Map the matrix to a new matrix with a different type.
     ///
     /// Note: The matrix dimensions will remain the same.
-    pub fn map<U>(&self, mut f: impl FnMut(&T) -> U) -> Matrix<U> {
-        let data = self.data.iter().map(|item| f(item)).collect();
+    pub fn map<U>(&self, mut f: impl FnMut(MatrixEntry<T>) -> U) -> Matrix<U> {
+        let data = self.entry_iter()
+            .map(|item| f(item))
+            .collect();
         Matrix::from_vec(self.width, self.height, data)
+    }
+
+    pub fn try_map<U, E>(&self, mut f: impl FnMut(MatrixEntry<T>) -> Result<U, E>) -> Result<Matrix<U>, E> {
+        let data = self.entry_iter()
+            .map(|item| f(item))
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Matrix::from_vec(self.width, self.height, data))
     }
 }
 

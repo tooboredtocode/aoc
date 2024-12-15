@@ -4,7 +4,6 @@ use aoc_lib::{io, AocClient};
 use crate::cli::{Cli, Commands};
 
 mod cli;
-mod util;
 mod years;
 mod tui;
 

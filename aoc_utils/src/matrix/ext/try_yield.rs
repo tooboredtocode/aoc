@@ -1,6 +1,6 @@
-use crate::util::matrix;
-use crate::util::matrix::Direction;
-use crate::util::matrix::ext::util::MatrixExtUtils;
+use crate::matrix;
+use crate::matrix::Direction;
+use crate::matrix::ext::util::MatrixExtUtils;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Yield {
@@ -154,8 +154,8 @@ impl<'a, T, P, K: sealed::YieldIterKind<'a, T>> MatrixExtUtils<'a, T> for YieldI
 }
 
 mod sealed {
-    use crate::util::matrix;
-    use crate::util::matrix::ext::YieldIter;
+    use crate::matrix;
+    use crate::matrix::ext::YieldIter;
 
     pub trait YieldIterKind<'a, T>: Sized {
         type Res;

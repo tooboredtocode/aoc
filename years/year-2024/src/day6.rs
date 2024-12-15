@@ -1,6 +1,6 @@
 use aoc_lib::{SolutionPart1, SolutionPart2};
-use crate::util::matrix::{Direction as MatrixDirection, Matrix};
-use crate::util::StringError;
+use crate::prelude::*;
+use aoc_utils::matrix::{Direction as MatrixDirection, Matrix};
 
 create_solution!(6);
 
@@ -43,10 +43,9 @@ enum GuardMoveError {
 
 impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = String;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let mut guard = input.initial_guard.clone();
         let mut visited = Matrix::new_with(input.obstacles.height(), input.obstacles.width(), |_, _| DirMap::new(false));
 
@@ -62,7 +61,7 @@ impl SolutionPart1 for PuzzleSolution {
 
             if v.get(guard.direction).eq(&true) {
                 // Guard has visited this cell before
-                return Err(StringError::new("Guard is stuck in a loop"));
+                bail!("Guard is stuck in a loop");
             } else {
                 v.set(guard.direction, true);
             }
@@ -70,7 +69,7 @@ impl SolutionPart1 for PuzzleSolution {
             steps += 1;
         }
         if let Err(GuardMoveError::Stuck) = guard.move_with_grid(&input.obstacles) {
-            return Err(StringError::new("Guard is stuck"));
+            bail!("Guard is stuck");
         }
 
         let visited = visited.entry_iter()
@@ -83,10 +82,9 @@ impl SolutionPart1 for PuzzleSolution {
 
 impl SolutionPart2 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = String;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let mut guard = input.initial_guard.clone();
         let mut initial_visited = Matrix::new_with(input.obstacles.height(), input.obstacles.width(), |_, _| DirMap::new(false));
 
@@ -101,13 +99,13 @@ impl SolutionPart2 for PuzzleSolution {
 
             if v.get(guard.direction).eq(&true) {
                 // Guard has visited this cell before
-                return Err(StringError::new("Guard is stuck in a loop"));
+                bail!("Guard is stuck in a loop");
             } else {
                 v.set(guard.direction, true);
             }
         }
         if let Err(GuardMoveError::Stuck) = guard.move_with_grid(&input.obstacles) {
-            return Err(StringError::new("Guard is stuck"));
+            bail!("Guard is stuck");
         }
 
         // Brute force the solution by adding obstacles and checking if the guard gets stuck
@@ -151,39 +149,29 @@ impl SolutionPart2 for PuzzleSolution {
 }
 
 impl aoc_lib::PuzzleInput for PuzzleInput {
-    type ParseError = StringError;
+    fn from_input(input: &str) -> Result<Self> {
+        let matrix = Matrix::from_string_chars(input.trim(), |c| c)
+            .context("Failed to parse input as a matrix")?;
 
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
-        let line_length = input.lines().next().map_or(0, |line| line.chars().count());
-        if line_length == 0 {
-            return Err(StringError::new("No lines in the input"));
-        }
-        if input.lines().any(|line| line.chars().count() != line_length) {
-            return Err(StringError::new("Lines in the input have different lengths"));
-        }
-        let row_height = input.lines().count();
-        if row_height == 0 {
-            return Err(StringError::new("No rows in the input"));
-        }
-
-        let mut obstacles = Matrix::new(row_height, line_length, false);
         let mut guard = None;
-
-        for (y, line) in input.lines().enumerate() {
-            for (x, c) in line.chars().enumerate() {
-                match c {
-                    '#' => _ = obstacles.set(x, y, true),
-                    '^' => guard = Some(Guard {
-                        position: (x, y),
-                        direction: Direction::Up,
-                    }),
-                    // There are no other directions possible
-                    _ => {}
+        let obstacles = matrix
+            .map(|entry| {
+                match entry.get() {
+                    '#' => true,
+                    '^' => {
+                        guard = Some(Guard {
+                            position: entry.position(),
+                            direction: Direction::Up,
+                        });
+                        false
+                    },
+                    _ => false,
                 }
-            }
-        }
+            });
 
-        let guard = guard.ok_or_else(|| StringError::new("No guard found"))?;
+        let Some(guard) = guard else {
+            bail!("No guard found in the input");
+        };
 
         Ok(PuzzleInput { obstacles, initial_guard: guard })
     }
@@ -229,7 +217,7 @@ impl Direction {
 }
 
 impl TryFrom<MatrixDirection> for Direction {
-    type Error = StringError;
+    type Error = Anyhow;
 
     fn try_from(value: MatrixDirection) -> Result<Self, Self::Error> {
         match value {
@@ -237,7 +225,7 @@ impl TryFrom<MatrixDirection> for Direction {
             MatrixDirection::Down => Ok(Direction::Down),
             MatrixDirection::Left => Ok(Direction::Left),
             MatrixDirection::Right => Ok(Direction::Right),
-            _ => Err(StringError::new("Invalid direction")),
+            _ => bail!("Invalid direction"),
         }
     }
 }

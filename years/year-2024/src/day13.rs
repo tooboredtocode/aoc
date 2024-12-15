@@ -1,7 +1,8 @@
-use crate::util::StringError;
-use aoc_lib::create_puzzle_result;
-use itertools::{Either, Itertools};
-use nalgebra::{Matrix2, Vector2};
+use crate::prelude::*;
+use aoc_utils::approx::RelativeEq;
+use aoc_utils::itertools::Either;
+use aoc_utils::itertools::Itertools;
+use aoc_utils::nalgebra::{Matrix2, Vector2};
 
 create_solution!(13);
 create_alt_solution!(13, MultipleSolutions, "Handle Multiple Solutions");
@@ -189,8 +190,6 @@ impl ArcadeGame {
         let b = self.prize_location.map(|x| x as f64);
 
         let Some(A_inv) = A.try_inverse() else {
-            use approx::RelativeEq;
-
             // The matrix is singular, so there is no unique solution.
             let a_float = self.button_a.distance_moved
                 .map(|x| x as f64);
@@ -279,18 +278,18 @@ impl ArcadeGame {
 }
 
 impl aoc_lib::PuzzleInput for PuzzleInput {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
-        fn parse_button(button: &str) -> Result<Button, StringError> {
+    fn from_input(input: &str) -> Result<Self> {
+        fn parse_button(button: &str) -> Result<Button> {
             let button = button.strip_prefix("X+")
-                .ok_or_else(|| StringError::new("Button not in expected format"))?;
+                .ok_or_else(|| Anyhow::msg("Button not in expected format"))?;
 
             let (x, y) = button.split_once(", Y+")
-                .ok_or_else(|| StringError::new("Button not in expected format"))?;
+                .ok_or_else(|| Anyhow::msg("Button not in expected format"))?;
 
-            let x = x.parse().map_err(|e| StringError::with_cause("Button X not a number: ", e))?;
-            let y = y.parse().map_err(|e| StringError::with_cause("Button Y not a number: ", e))?;
+            let x = x.parse()
+                .context("Button X is not a number")?;
+            let y = y.parse()
+                .context("Button Y is not a number")?;
 
             Ok(Button { distance_moved: Vector2::new(x, y) })
         }
@@ -298,33 +297,33 @@ impl aoc_lib::PuzzleInput for PuzzleInput {
         let arcade_games = input.trim().split("\n\n")
             .map(|game| {
                 let mut lines = game.lines();
-                let button_a = lines.next().ok_or_else(|| StringError::new("Button A missing"))?;
-                let button_b = lines.next().ok_or_else(|| StringError::new("Button B missing"))?;
-                let prize = lines.next().ok_or_else(|| StringError::new("Prize missing"))?;
+                let button_a = lines.next().ok_or_else(|| Anyhow::msg("Button A missing"))?;
+                let button_b = lines.next().ok_or_else(|| Anyhow::msg("Button B missing"))?;
+                let prize = lines.next().ok_or_else(|| Anyhow::msg("Prize missing"))?;
 
                 let button_a = match button_a.strip_prefix("Button A: ") {
                     Some(button_a) => parse_button(button_a)?,
-                    None => return Err(StringError::new("Button A not in expected format")),
+                    None => return Err(Anyhow::msg("Button A not in expected format")),
                 };
 
                 let button_b = match button_b.strip_prefix("Button B: ") {
                     Some(button_b) => parse_button(button_b)?,
-                    None => return Err(StringError::new("Button B not in expected format")),
+                    None => return Err(Anyhow::msg("Button B not in expected format")),
                 };
 
                 let prize = match prize.strip_prefix("Prize: X=") {
                     Some(prize) => {
                         let (x, y) = prize.split_once(", Y=")
-                            .ok_or_else(|| StringError::new("Prize not in expected format"))?;
+                            .ok_or_else(|| Anyhow::msg("Prize not in expected format"))?;
 
                         let x = x.parse()
-                            .map_err(|e| StringError::with_cause("Prize X not a number: ", e))?;
+                            .context("Prize X not a number")?;
                         let y = y.parse()
-                            .map_err(|e| StringError::with_cause("Prize Y not a number: ", e))?;
+                            .context("Prize Y not a number")?;
 
                         Vector2::new(x, y)
                     },
-                    None => return Err(StringError::new("Prize not in expected format")),
+                    None => return Err(Anyhow::msg("Prize not in expected format")),
                 };
 
                 Ok(ArcadeGame { button_a, button_b, prize_location: prize })

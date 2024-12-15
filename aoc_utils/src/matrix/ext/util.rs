@@ -1,5 +1,5 @@
-use crate::util::matrix;
-use crate::util::matrix::Direction;
+use crate::matrix;
+use crate::matrix::Direction;
 
 /// Extension trait for matrix iterators.
 ///

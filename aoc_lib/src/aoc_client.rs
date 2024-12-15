@@ -1,17 +1,12 @@
-use std::{fmt, fs, io};
+use anyhow::{Context, Result};
+use reqwest::Method;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
-use reqwest::Method;
+use std::{fs, io};
 
 pub struct AocClient {
     client: reqwest::Client,
-}
-
-#[derive(Debug)]
-pub enum AocClientError {
-    Request(reqwest::Error),
-    Io(io::Error),
 }
 
 const USER_AGENT: &str = concat!("aoc-client/", env!("CARGO_PKG_VERSION"));
@@ -41,11 +36,13 @@ impl AocClient {
         inner(session.as_ref())
     }
 
-    pub async fn get_challenge(&self, year: u16, day: u8) -> Result<String, AocClientError> {
-        match self.get_challenge_from_fs(year, day)? {
+    pub async fn get_challenge(&self, year: u16, day: u8) -> Result<String> {
+        match self.get_challenge_from_fs(year, day)
+            .context("Failed to check the cache for the challenge")?
+        {
             Some(text) => Ok(text),
             None => self.get_challenge_from_server(year, day).await
-                .map_err(Into::into)
+                .context("Failed to fetch challenge from server")
         }
     }
 
@@ -54,7 +51,7 @@ impl AocClient {
     }
 
     // Get the cached input from the cache file
-    fn get_challenge_from_fs(&self, year: u16, day: u8) -> Result<Option<String>, io::Error> {
+    fn get_challenge_from_fs(&self, year: u16, day: u8) -> Result<Option<String>> {
         let path = Self::cache_path(year, day);
         let mut file = match File::open(&path) {
             Ok(file) => file,
@@ -62,15 +59,18 @@ impl AocClient {
                 return if err.kind() == io::ErrorKind::NotFound {
                     Ok(None) // File not found
                 } else {
-                    Err(err)
+                    Err(anyhow::Error::from(err)
+                        .context("Something went wrong while trying to open the cached input file"))
                 }
             }
         };
 
         let size = file.metadata().map(|m| m.len() as usize).ok();
         let mut res = String::new();
-        res.try_reserve_exact(size.unwrap_or(0))?;
-        file.read_to_string(&mut res)?;
+        res.try_reserve_exact(size.unwrap_or(0))
+            .context("Failed to read the cached input file")?;
+        file.read_to_string(&mut res)
+            .context("Failed to read the cached input file")?;
 
         Ok(Some(res))
     }
@@ -92,45 +92,12 @@ impl AocClient {
 
         self.try_save_challenge_to_fs(year, day, &res)
             .unwrap_or_else(|err| {
-                crate::io::print_debug(format_args!("Failed to cache input: {}", err));
+                crate::io::print_debug(format_args!("{:?}",
+                    anyhow::Error::new(err)
+                        .context("Failed to save the challenge to the cache")
+                ));
             });
 
         Ok(res)
-    }
-}
-
-impl From<reqwest::Error> for AocClientError {
-    fn from(err: reqwest::Error) -> Self {
-        AocClientError::Request(err)
-    }
-}
-
-impl From<io::Error> for AocClientError {
-    fn from(err: io::Error) -> Self {
-        AocClientError::Io(err)
-    }
-}
-
-impl fmt::Display for AocClientError{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            AocClientError::Request(err) => {
-                write!(f, "Request error: ")?;
-                fmt::Display::fmt(err, f)
-            }
-            AocClientError::Io(err) => {
-                write!(f, "IO error: ")?;
-                fmt::Display::fmt(err, f)
-            }
-        }
-    }
-}
-
-impl std::error::Error for AocClientError{
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            AocClientError::Request(err) => Some(err),
-            AocClientError::Io(err) => Some(err),
-        }
     }
 }

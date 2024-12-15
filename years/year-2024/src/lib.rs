@@ -30,10 +30,9 @@ macro_rules! create_solution_part1 {
     (($input_i:ident: $input:ty) -> $result:ty { $($code:tt)* }) => {
         impl ::aoc_lib::SolutionPart1 for PuzzleSolution {
             type Input = $input;
-            type SolveError = $crate::util::StringError;
             type Result = $result;
 
-            fn solve($input_i: Self::Input) -> Result<Self::Result, Self::SolveError> {
+            fn solve($input_i: Self::Input) -> ::aoc_utils::anyhow::Result<Self::Result> {
                 $($code)*
             }
         }
@@ -44,10 +43,9 @@ macro_rules! create_alt_solution_part1 {
     ($name:ident, ($input_i:ident: $input:ty) -> $result:ty { $($code:tt)* }) => {
         impl ::aoc_lib::SolutionPart1 for $name {
             type Input = $input;
-            type SolveError = $crate::util::StringError;
             type Result = $result;
 
-            fn solve($input_i: Self::Input) -> Result<Self::Result, Self::SolveError> {
+            fn solve($input_i: Self::Input) -> ::aoc_utils::anyhow::Result<Self::Result> {
                 $($code)*
             }
         }
@@ -58,10 +56,9 @@ macro_rules! create_solution_part2 {
     (($input_i:ident: $input:ty) -> $result:ty { $($code:tt)* }) => {
         impl ::aoc_lib::SolutionPart2 for PuzzleSolution {
             type Input = $input;
-            type SolveError = $crate::util::StringError;
             type Result = $result;
 
-            fn solve($input_i: Self::Input) -> Result<Self::Result, Self::SolveError> {
+            fn solve($input_i: Self::Input) -> ::aoc_utils::anyhow::Result<Self::Result> {
                 $($code)*
             }
         }
@@ -72,16 +69,16 @@ macro_rules! create_alt_solution_part2 {
     ($name:ident, ($input_i:ident: $input:ty) -> $result:ty { $($code:tt)* }) => {
         impl ::aoc_lib::SolutionPart2 for $name {
             type Input = $input;
-            type SolveError = $crate::util::StringError;
             type Result = $result;
 
-            fn solve($input_i: Self::Input) -> Result<Self::Result, Self::SolveError> {
+            fn solve($input_i: Self::Input) -> ::aoc_utils::anyhow::Result<Self::Result> {
                 $($code)*
             }
         }
     }
 }
 
+mod prelude;
 mod day1;
 mod day2;
 mod day3;
@@ -97,7 +94,7 @@ mod day12;
 mod day13;
 mod day14;
 
-pub fn year2024() -> Year {
+pub fn year() -> Year {
     let mut year = Year::new(2024);
     year.add_days([
         Day::solved::<day1::PuzzleSolution>(),

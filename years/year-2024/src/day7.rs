@@ -1,5 +1,5 @@
 use aoc_lib::{SolutionPart1, SolutionPart2};
-use crate::util::StringError;
+use crate::prelude::*;
 
 create_solution!(7);
 
@@ -16,10 +16,9 @@ pub struct Equation {
 
 impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = String;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let mut valid = 0u64;
         let result = Equation::valid_equations(&input.equations, false)
             .map(|equation| equation.result)
@@ -32,10 +31,9 @@ impl SolutionPart1 for PuzzleSolution {
 
 impl SolutionPart2 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = String;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let mut valid = 0u64;
         let result = Equation::valid_equations(&input.equations, true)
             .map(|equation| equation.result)
@@ -108,21 +106,19 @@ impl Equation {
 }
 
 impl aoc_lib::PuzzleInput for PuzzleInput {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self> {
         input.lines()
             .map(|line| {
                 let (result, operands) = line.split_once(":")
-                    .ok_or_else(|| StringError::new("Expected lines in the format 'result: operand1 operand2'"))?;
+                    .ok_or_else(|| Anyhow::msg("Expected lines in the format 'result: operand1 operand2'"))?;
 
                 let result = result.trim()
                     .parse()
-                    .map_err(|err| StringError::with_cause("Expected a number: ", err))?;
+                    .context("Expected a number")?;
                 let operands = operands.split_whitespace()
                     .map(|operand|
                         operand.parse()
-                            .map_err(|err| StringError::with_cause("Expected a number: ", err))
+                            .context("Expected a number")
                     )
                     .collect::<Result<Vec<u64>, _>>()?;
 

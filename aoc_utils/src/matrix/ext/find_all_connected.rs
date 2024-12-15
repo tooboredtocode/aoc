@@ -1,6 +1,6 @@
 use rustc_hash::FxHashSet;
-use crate::util::matrix::ext::util::MatrixExtUtils;
-use crate::util::matrix::{Direction, MatrixEntry};
+use crate::matrix::ext::util::MatrixExtUtils;
+use crate::matrix::{Direction, MatrixEntry};
 
 pub struct FindAllConnectedIter<'a, T, P>
 where

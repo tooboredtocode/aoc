@@ -1,7 +1,7 @@
-use rustc_hash::FxHashSet;
-use aoc_lib::create_puzzle_result;
-use crate::util::matrix::{Direction, Matrix};
-use crate::util::StringError;
+use aoc_utils::matrix::{Direction, Matrix};
+use aoc_utils::one_off::OneOff;
+use aoc_utils::rustc_hash::FxHashSet;
+use crate::prelude::*;
 
 create_solution!(12);
 
@@ -121,15 +121,13 @@ create_solution_part2!((input: PuzzleInput) -> PuzzleResultPart2 {
 });
 
 impl aoc_lib::PuzzleInput for PuzzleInput {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self> {
         let garden_plots = Matrix::try_from_string_chars(input.trim(), |c| {
             match c {
                 'A'..='Z' => Ok(c),
-                _ => Err(StringError::new(format!("Invalid character: {}", c))),
+                _ => Err(OneOff::new(format!("Invalid character: {}", c))),
             }
-        })?;
+        }).context("Failed to parse garden plots")?;
         Ok(Self { garden_plots })
     }
 }

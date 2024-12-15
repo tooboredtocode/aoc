@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use async_trait::async_trait;
+use anyhow::Result;
 
 use crate::{AocClient, SolutionPart1};
 use crate::puzzle::{SolutionPart1Ext};
@@ -10,8 +11,8 @@ pub trait PartialSolvedDayTrait: sealed::Sealed {
     fn day(&self) -> u8;
     fn alt(&self) -> Option<&'static str>;
 
-    async fn run_part1(&self, client: &AocClient);
-    async fn bench_part1(&self, client: &AocClient, iterations: u32);
+    async fn run_part1(&self, client: &AocClient) -> Result<()>;
+    async fn bench_part1(&self, client: &AocClient, iterations: u32) -> Result<()>;
 }
 
 pub struct PartialSolvedDay<P: SolutionPart1> {
@@ -50,12 +51,12 @@ impl<P: SolutionPart1> PartialSolvedDayTrait for PartialSolvedDay<P> {
         P::ALT
     }
 
-    async fn run_part1(&self, client: &AocClient) {
-        P::run_part1(client).await;
+    async fn run_part1(&self, client: &AocClient) -> Result<()> {
+        P::run_part1(client).await
     }
 
-    async fn bench_part1(&self, client: &AocClient, iterations: u32) {
-        P::bench_part1(client, iterations).await;
+    async fn bench_part1(&self, client: &AocClient, iterations: u32) -> Result<()> {
+        P::bench_part1(client, iterations).await
     }
 }
 

@@ -1,6 +1,6 @@
+use crate::prelude::*;
 use std::iter::repeat_n;
-use itertools::Itertools;
-use crate::util::StringError;
+use aoc_utils::itertools::Itertools;
 
 create_solution!(9);
 
@@ -56,7 +56,7 @@ create_solution_part1!((input: PuzzleInputPart1) -> PuzzleResult {
             if let Some((_, id)) = take_back.next() {
                 Some(Ok((i, id)))
             } else {
-                Some(Err(StringError::new("Take back iterator should never run out before the main iterator")))
+                Some(Err(Anyhow::msg("Take back iterator should never run out before the main iterator")))
             }
         })
         .map_ok(|(position, id)| {
@@ -144,12 +144,12 @@ impl ContinuousBlock {
         }
     }
 
-    fn from_string(s: &str) -> impl Iterator<Item = Result<Self, StringError>> + '_ {
+    fn from_string(s: &str) -> impl Iterator<Item = Result<Self, Anyhow>> + '_ {
         s.chars()
             .enumerate()
             .map(|(i, c)| c.to_digit(10)
                 .map(|d| (i, d))
-                .ok_or_else(|| StringError::new("Input should only contain digits"))
+                .ok_or_else(|| Anyhow::msg("Input should only contain digits"))
             )
             .map_ok(|(i, repeat)| {
                 if i % 2 == 0 {
@@ -180,10 +180,8 @@ impl Block {
     }
 }
 
-impl aoc_lib::PuzzleInput for PuzzleInputPart1 {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+impl PuzzleInput for PuzzleInputPart1 {
+    fn from_input(input: &str) -> Result<Self> {
         let fs = ContinuousBlock::from_string(input.trim())
             .map_ok(|block| block.iter())
             .flatten_ok()
@@ -193,10 +191,8 @@ impl aoc_lib::PuzzleInput for PuzzleInputPart1 {
     }
 }
 
-impl aoc_lib::PuzzleInput for PuzzleInputPart2 {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+impl PuzzleInput for PuzzleInputPart2 {
+    fn from_input(input: &str) -> Result<Self> {
         let fs = ContinuousBlock::from_string(input.trim())
             .try_collect()?;
 

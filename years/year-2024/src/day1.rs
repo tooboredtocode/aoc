@@ -1,5 +1,5 @@
-use aoc_lib::{impl_puzzle_result, PuzzleInput, SolutionPart1, SolutionPart2};
-use crate::util::StringError;
+use aoc_lib::{SolutionPart1, SolutionPart2};
+use crate::prelude::*;
 
 create_solution!(1);
 
@@ -21,10 +21,9 @@ impl_puzzle_result!(ResultPart2, "Similarity score: {}", similarity_score);
 
 impl SolutionPart1 for PuzzleSolution {
     type Input = Input;
-    type SolveError = StringError;
     type Result = ResultPart1;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let mut list1 = input.pairs.iter().map(|(a, _)| *a).collect::<Vec<_>>();
         let mut list2 = input.pairs.iter().map(|(_, b)| *b).collect::<Vec<_>>();
         list1.sort();
@@ -42,10 +41,9 @@ impl SolutionPart1 for PuzzleSolution {
 
 impl SolutionPart2 for PuzzleSolution {
     type Input = Input;
-    type SolveError = StringError;
     type Result = ResultPart2;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let list1 = input.pairs.iter().map(|(a, _)| *a).collect::<Vec<_>>();
         let list2 = input.pairs.iter().map(|(_, b)| *b).collect::<Vec<_>>();
 
@@ -61,9 +59,7 @@ impl SolutionPart2 for PuzzleSolution {
 }
 
 impl PuzzleInput for Input {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self> {
         let mut pairs = Vec::new();
 
         for line in input.lines() {
@@ -73,11 +69,11 @@ impl PuzzleInput for Input {
             if let (Some(Ok(num1)), Some(Ok(num2))) = (nums.next(), nums.next()) {
                 pairs.push((num1, num2));
             } else {
-                return Err(StringError::new("AOC returned invalid input"));
+                return Err(Anyhow::msg("AOC returned invalid input"));
             }
 
             if nums.next().is_some() {
-                return Err(StringError::new("AOC returned invalid input"));
+                return Err(Anyhow::msg("AOC returned invalid input"));
             }
         }
 

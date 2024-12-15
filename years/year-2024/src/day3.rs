@@ -1,7 +1,7 @@
-use crate::util::StringError;
-use lazy_regex::{lazy_regex, Lazy};
-use regex::Regex;
 use aoc_lib::{SolutionPart1, SolutionPart2};
+use aoc_utils::lazy_regex::{lazy_regex, Lazy, Regex};
+use aoc_utils::lazy_regex;
+use crate::prelude::*;
 
 create_solution!(3);
 
@@ -29,11 +29,10 @@ pub struct PuzzleResult {
 
 impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = PuzzleResult;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
-        let result = Instruction::parse_jumbled(&input.jumbled_instructions)?
+    fn solve(input: Self::Input) -> Result<Self::Result> {
+        let result = Instruction::parse_jumbled(&input.jumbled_instructions)
             .into_iter()
             .filter_map(|instruction| match instruction { // Filter out non-mul instructions
                 Instruction::Mul(a, b) => Some((a, b)),
@@ -51,11 +50,10 @@ impl SolutionPart1 for PuzzleSolution {
 
 impl SolutionPart2 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = PuzzleResult;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
-        let result = Instruction::parse_jumbled(&input.jumbled_instructions)?
+    fn solve(input: Self::Input) -> Result<Self::Result> {
+        let result = Instruction::parse_jumbled(&input.jumbled_instructions)
             .into_iter()
             .fold((0, true), |(acc, active), instruction| {
                 match instruction {
@@ -84,15 +82,13 @@ impl aoc_lib::PuzzleResult for PuzzleResult {
 }
 
 impl aoc_lib::PuzzleInput for PuzzleInput {
-    type ParseError = StringError;
-
     const PREFERS_OWNED_INPUT: bool = true;
 
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self> {
         Self::from_input_owned(input.to_string())
     }
 
-    fn from_input_owned(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input_owned(input: String) -> Result<Self> {
         Ok(Self {
             jumbled_instructions: input,
         })
@@ -100,7 +96,7 @@ impl aoc_lib::PuzzleInput for PuzzleInput {
 }
 
 impl Instruction {
-    fn parse_jumbled(jumbled: &str) -> Result<Vec<Self>, StringError> {
+    fn parse_jumbled(jumbled: &str) -> Vec<Self> {
         let valid_instructions = INSTRUCTION_REGEX
             .captures_iter(jumbled)
             .map(|captures| {
@@ -120,6 +116,6 @@ impl Instruction {
                 unreachable!("The regex should only match valid instructions");
             });
 
-        Ok(valid_instructions.collect()) // Collect, so we don't need the haystack any more
+        valid_instructions.collect() // Collect, so we don't need the haystack any more
     }
 }

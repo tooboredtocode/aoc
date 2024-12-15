@@ -1,6 +1,6 @@
 use aoc_lib::{SolutionPart1, SolutionPart2};
-use crate::util::matrix::{Direction, Matrix};
-use crate::util::StringError;
+use aoc_utils::matrix::{Direction, Matrix};
+use crate::prelude::*;
 
 create_solution!(4);
 
@@ -10,11 +10,10 @@ pub struct PuzzleInput {
 
 impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = String;
 
     /// Find all xmases in the word search
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let result = input.word_search
             .entry_iter()
             .filter(|item| item.get() == &'X')
@@ -38,11 +37,10 @@ impl SolutionPart1 for PuzzleSolution {
 
 impl SolutionPart2 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = String;
 
     /// Find all x-mas-es (aka two mas oriented in an x) in the word search
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let result = input.word_search
             .entry_iter()
             .filter(|item| item.get() == &'A') // Find all As so we can check for the other two letters
@@ -75,24 +73,9 @@ impl SolutionPart2 for PuzzleSolution {
 }
 
 impl aoc_lib::PuzzleInput for PuzzleInput {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
-        let line_length = input.lines().next().map_or(0, |line| line.chars().count());
-        if line_length == 0 {
-            return Err(StringError::new("No lines in the input"));
-        }
-        if input.lines().any(|line| line.chars().count() != line_length) {
-            return Err(StringError::new("Lines in the input have different lengths"));
-        }
-        let row_height = input.lines().count();
-        if row_height == 0 {
-            return Err(StringError::new("No rows in the input"));
-        }
-
-        let text = input.lines().flat_map(|line| line.chars()).collect::<Vec<_>>();
-
-        let matrix = Matrix::from_vec(line_length, row_height, text);
+    fn from_input(input: &str) -> Result<Self> {
+        let matrix = Matrix::from_string_chars(input.trim(), |c| c)
+            .context("Failed to parse input as a matrix")?;
 
         Ok(Self {
             word_search: matrix,

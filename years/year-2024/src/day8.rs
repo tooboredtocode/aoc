@@ -1,7 +1,7 @@
-use rustc_hash::FxHashMap;
 use aoc_lib::{SolutionPart1, SolutionPart2};
-use crate::util::matrix::{Matrix, MatrixEntry};
-use crate::util::StringError;
+use crate::prelude::*;
+use aoc_utils::matrix::{Matrix, MatrixEntry};
+use aoc_utils::rustc_hash::FxHashMap;
 
 create_solution!(8);
 
@@ -22,10 +22,9 @@ pub struct PuzzleResult {
 
 impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = PuzzleResult;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let mut antinodes = Matrix::new(input.antennas.width(), input.antennas.height(), false);
 
         let buckets = input.bucket_antennas();
@@ -64,10 +63,9 @@ impl SolutionPart1 for PuzzleSolution {
 
 impl SolutionPart2 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = PuzzleResult;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let mut antinodes = Matrix::new(input.antennas.width(), input.antennas.height(), false);
 
         let buckets = input.bucket_antennas();
@@ -144,9 +142,7 @@ impl PuzzleInput {
 }
 
 impl aoc_lib::PuzzleInput for PuzzleInput {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self> {
         let antennas = Matrix::from_string_chars(input.trim(), |c| match c {
             'A'..='Z'
             | 'a'..='z'

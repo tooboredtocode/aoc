@@ -1,0 +1,12 @@
+[package]
+name = "aoc_utils"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+approx = "0.5"
+nalgebra = "0.33"
+rustc-hash = "2.1"
+regex = "1.11"
+lazy-regex = "3.3"
+itertools = "0.13"

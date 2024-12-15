@@ -1,5 +1,5 @@
 use aoc_lib::{SolutionPart1, SolutionPart2};
-use crate::util::StringError;
+use crate::prelude::*;
 
 create_solution!(5);
 
@@ -16,10 +16,9 @@ pub struct Update {
 
 impl SolutionPart1 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = String;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let valid_updates = input.updates.iter().filter(|update| {
             update.pages.iter()
                 .enumerate()
@@ -40,7 +39,7 @@ impl SolutionPart1 for PuzzleSolution {
             let middle = update.pages.len() / 2;
             update.pages.get(middle)
         }).sum::<Option<u32>>()
-            .ok_or_else(|| StringError::new("Failed to sum, some valid updates are empty"))?;
+            .ok_or_else(|| Anyhow::msg("Failed to sum, some valid updates are empty"))?;
 
         Ok(format!("Found {} valid updates, result: {}", valid_updates.len(), res))
     }
@@ -48,10 +47,9 @@ impl SolutionPart1 for PuzzleSolution {
 
 impl SolutionPart2 for PuzzleSolution {
     type Input = PuzzleInput;
-    type SolveError = StringError;
     type Result = String;
 
-    fn solve(input: Self::Input) -> Result<Self::Result, Self::SolveError> {
+    fn solve(input: Self::Input) -> Result<Self::Result> {
         let mut invalid_updates = input.updates.iter().filter(|update| {
             update.pages.iter()
                 .enumerate()
@@ -95,42 +93,40 @@ impl SolutionPart2 for PuzzleSolution {
             let middle = update.pages.len() / 2;
             update.pages.get(middle)
         }).sum::<Option<u32>>()
-            .ok_or_else(|| StringError::new("Failed to sum, some invalid updates are empty"))?;
+            .ok_or_else(|| Anyhow::msg("Failed to sum, some invalid updates are empty"))?;
 
         Ok(format!("Found {} invalid updates\nResult of reordered invalid updates: {}", invalid_updates.len(), res))
     }
 }
 
 impl aoc_lib::PuzzleInput for PuzzleInput {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self> {
         let (rules_text, updates_text) = input.split_once("\n\n")
-            .ok_or_else(|| StringError::new("Failed to split text"))?;
+            .ok_or_else(|| Anyhow::msg("Failed to split text"))?;
 
         let mut rules = rules::Rules::new();
 
         rules_text.lines().try_for_each(|line| {
             let (from, to) = line.split_once("|")
-                .ok_or_else(|| StringError::new("Failed to split line"))?;
+                .ok_or_else(|| Anyhow::msg("Failed to split line"))?;
 
             let from = from.parse::<u32>()
-                .map_err(|e| StringError::with_cause("Failed to parse from", e))?;
+                .context("Failed to parse from")?;
             let to = to.parse::<u32>()
-                .map_err(|e| StringError::with_cause("Failed to parse to", e))?;
+                .context("Failed to parse to")?;
 
             rules.add_rule(from, to);
 
-            Ok(())
+            Ok::<_, Anyhow>(())
         })?;
 
         let updates = updates_text.lines().map(|line| {
             let pages = line.split(',').map(|page| {
                 page.parse::<u32>()
-                    .map_err(|e| StringError::with_cause("Failed to parse page", e))
+                    .context("Failed to parse page")
             }).collect::<Result<Vec<_>, _>>()?;
 
-            Ok(Update {
+            Ok::<_, Anyhow>(Update {
                 pages,
             })
         }).collect::<Result<Vec<_>, _>>()?;
@@ -145,7 +141,7 @@ impl aoc_lib::PuzzleInput for PuzzleInput {
 // Note: we may not use all methods, but they should remain for completeness’s sake
 #[allow(dead_code)]
 mod rules {
-    use rustc_hash::{FxHashMap, FxHashSet};
+    use aoc_utils::rustc_hash::{FxHashMap, FxHashSet};
 
     #[derive(Debug)]
     pub struct Rules {

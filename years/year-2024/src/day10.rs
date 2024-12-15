@@ -1,8 +1,8 @@
-use crate::util::matrix::ext::Yield;
-use crate::util::matrix::{Matrix, MatrixEntry};
-use crate::util::StringError;
-use aoc_lib::create_puzzle_result;
-use itertools::Itertools;
+use aoc_utils::itertools::Itertools;
+use aoc_utils::matrix::{Matrix, MatrixEntry};
+use aoc_utils::matrix::ext::Yield;
+use aoc_utils::one_off::OneOff;
+use crate::prelude::*;
 
 create_solution!(10);
 
@@ -55,17 +55,15 @@ create_solution_part2!((input: PuzzleInput) -> PuzzleResultPart2 {
 });
 
 impl aoc_lib::PuzzleInput for PuzzleInput {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self> {
         let elevations = Matrix::try_from_string_chars(input.trim(), |c| {
             match c {
                 '0'..='9' => c.to_digit(10)
                     .map(|d| Ok(d as u16))
                     .expect("Digit should always be valid"),
-                _ => Err(StringError::new("Invalid character in input"))
+                _ => Err(OneOff::new("Invalid character in input"))
             }
-        })?;
+        }).context("Failed to parse map")?;
 
         Ok(PuzzleInput { elevations })
     }

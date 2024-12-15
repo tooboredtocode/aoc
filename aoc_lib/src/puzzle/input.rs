@@ -1,13 +1,11 @@
-use std::error::Error;
+use anyhow::Result;
 
 pub trait PuzzleInput: Sized {
-    type ParseError: Error;
-
     /// Indicates if the input prefers to be parsed from an owned string.
     const PREFERS_OWNED_INPUT: bool = false;
 
     /// Parse the input from a string.
-    fn from_input(input: &str) -> Result<Self, Self::ParseError>;
+    fn from_input(input: &str) -> Result<Self>;
 
     /// Parse the input from an owned string.
     ///
@@ -17,7 +15,7 @@ pub trait PuzzleInput: Sized {
     /// # Note
     /// To indicate that the input is more performant to parse from an owned string, you can
     /// override the `PREFERS_OWNED_INPUT` constant to `true`.
-    fn from_input_owned(input: String) -> Result<Self, Self::ParseError> {
+    fn from_input_owned(input: String) -> Result<Self> {
         Self::from_input(&input)
     }
 }

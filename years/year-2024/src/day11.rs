@@ -1,8 +1,7 @@
-use rustc_hash::FxHashMap;
-use itertools::{Either, Itertools};
-use aoc_lib::create_puzzle_result;
-use crate::util::num::NumUtils;
-use crate::util::StringError;
+use crate::prelude::*;
+use aoc_utils::itertools::{Either, Itertools};
+use aoc_utils::num::NumUtils;
+use aoc_utils::rustc_hash::FxHashMap;
 
 create_solution!(11);
 
@@ -81,15 +80,13 @@ impl Stone {
 }
 
 impl aoc_lib::PuzzleInput for PuzzleInput {
-    type ParseError = StringError;
-
-    fn from_input(input: &str) -> Result<Self, Self::ParseError> {
+    fn from_input(input: &str) -> Result<Self> {
         let stones = input.trim()
             .split_whitespace()
             .map(|s|
                 s.parse()
+                    .context("Failed to parse stone")
                     .map(|value| Stone { value })
-                    .map_err(|e| StringError::with_cause("Failed to parse stone: ", e))
             )
             .try_collect()?;
 
